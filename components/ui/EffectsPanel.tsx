@@ -1,14 +1,14 @@
 'use client';
 import { useAppStore } from '@/lib/store';
-import type { EffectType } from '@/lib/types';
+import type { EffectType, Layer } from '@/lib/types';
 
 const EFFECTS: { id: EffectType; label: string; emoji: string }[] = [
-  { id: 'none',        label: 'אין',          emoji: '-' },
+  { id: 'none',         label: 'אין',          emoji: '-' },
   { id: 'kaleidoscope', label: 'Kaleidoscope', emoji: '✨' },
-  { id: 'tunnel',      label: 'Tunnel',       emoji: '🌀' },
-  { id: 'colorshift',  label: 'Color Shift',  emoji: '🌈' },
-  { id: 'distort',     label: 'Distort',      emoji: '🌊' },
-  { id: 'mirror',      label: 'Mirror',       emoji: '🔄' },
+  { id: 'tunnel',       label: 'Tunnel',       emoji: '🌀' },
+  { id: 'colorshift',   label: 'Color Shift',  emoji: '🌈' },
+  { id: 'distort',      label: 'Distort',      emoji: '🌊' },
+  { id: 'mirror',       label: 'Mirror',       emoji: '🔄' },
 ];
 
 export default function EffectsPanel() {
