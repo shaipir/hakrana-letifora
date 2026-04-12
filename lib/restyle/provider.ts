@@ -40,51 +40,57 @@ const googleImagenProvider: RestyleProvider = {
 
     const { settings, imageBase64, mimeType } = req;
 
-    const prompt = buildPrompt(settings);
+    // Step 1: Use Gemini vision to describe the image so we can feed it into Imagen 3
+    const describeBody = {
+      contents: [{
+        parts: [
+          { inline_data: { mime_type: mimeType, data: imageBase64 } },
+          { text: 'Describe this image in detail: the subject, pose, composition, setting, colors, and any notable visual elements. Be specific and concise (3-4 sentences).' },
+        ],
+      }],
+    };
 
-    const body = {
-      contents: [
-        {
-          parts: [
-            {
-              inline_data: {
-                mime_type: mimeType,
-                data: imageBase64,
-              },
-            },
-            { text: prompt },
-          ],
-        },
-      ],
-      generationConfig: {
-        responseModalities: ['IMAGE', 'TEXT'],
-        temperature: 1 - settings.preserveStructure * 0.5,
+    const describeRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(describeBody) }
+    );
+    if (!describeRes.ok) {
+      const t = await describeRes.text();
+      throw new Error(`Gemini vision error ${describeRes.status}: ${t.slice(0, 300)}`);
+    }
+    const describeJson = await describeRes.json();
+    const description = describeJson?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'a person in an artistic pose';
+
+    // Step 2: Generate styled image with Imagen 3 using the description + style prompt
+    const stylePrompt = buildPrompt(settings, description);
+
+    const imagenBody = {
+      instances: [{ prompt: stylePrompt }],
+      parameters: {
+        sampleCount: 1,
+        aspectRatio: '1:1',
       },
     };
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    const imagenRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(imagenBody) }
+    );
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Google Imagen error ${res.status}: ${text.slice(0, 300)}`);
+    if (!imagenRes.ok) {
+      const t = await imagenRes.text();
+      throw new Error(`Imagen 3 error ${imagenRes.status}: ${t.slice(0, 300)}`);
     }
 
-    const json = await res.json();
-    const parts: any[] = json?.candidates?.[0]?.content?.parts ?? [];
-    const imagePart = parts.find((p: any) => p.inline_data?.mime_type?.startsWith('image/'));
-
-    if (!imagePart) {
-      throw new Error('No image returned from Google Imagen');
+    const imagenJson = await imagenRes.json();
+    const prediction = imagenJson?.predictions?.[0];
+    if (!prediction?.bytesBase64Encoded) {
+      throw new Error('No image returned from Imagen 3');
     }
 
     return {
-      imageBase64: imagePart.inline_data.data,
-      mimeType: imagePart.inline_data.mime_type,
+      imageBase64: prediction.bytesBase64Encoded,
+      mimeType: prediction.mimeType ?? 'image/png',
     };
   },
 };
@@ -144,24 +150,17 @@ export function getRestyleProvider(): RestyleProvider {
 
 // ─── Prompt Builder ──────────────────────────────────────────────────────────
 
-function buildPrompt(settings: RestyleSettings): string {
+function buildPrompt(settings: RestyleSettings, imageDescription?: string): string {
   const presetBase = getPresetBasePrompt(settings.preset);
   const userPrompt = settings.prompt.trim();
-
-  const styleDesc = [
-    `stylization strength: ${Math.round(settings.stylizationStrength * 100)}%`,
-    `background darkness: ${Math.round(settings.backgroundDarkness * 100)}%`,
-    `glow amount: ${Math.round(settings.glowAmount * 100)}%`,
-    `subject clarity: ${Math.round(settings.subjectClarity * 100)}%`,
-    `structure preservation: ${Math.round(settings.preserveStructure * 100)}%`,
-  ].join(', ');
+  const subject = imageDescription ? `Subject: ${imageDescription}.` : '';
 
   return [
     presetBase,
+    subject,
     userPrompt ? `Additional style direction: ${userPrompt}.` : '',
-    `Technical parameters: ${styleDesc}.`,
     'Output should be projection-ready with high contrast against dark backgrounds.',
-    'Preserve the main subject composition and pose.',
+    'Maintain the original subject composition and pose faithfully.',
   ]
     .filter(Boolean)
     .join(' ');
