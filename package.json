@@ -1,1 +1,31 @@
-{\n  "name": "hakrana-letifora",\n  "version": "0.1.0",\n  "private": true,\n  "scripts": {\n    "dev": "next dev",\n    "build": "next build",\n    "start": "next start",\n    "lint": "next lint"\n  },\n  "dependencies": {\n    "next": "14.2.3",\n    "react": "^18",\n    "react-dom": "^18",\n    "zustand": "^4.5.2",\n    "@supabase/supabase-js": "^2.43.1",\n    "lucide-react": "^0.383.0",\n    "clsx": "^2.1.1"\n  },\n  "devDependencies": {\n    "typescript": "^5",\n    "@types/node": "^20",\n    "@types/react": "^18",\n    "@types/react-dom": "^18",\n    "tailwindcss": "^3.4.1",\n    "postcss": "^8",\n    "autoprefixer": "^10.0.1",\n    "eslint": "^8",\n    "eslint-config-next": "14.2.3"\n  }\n}\n
+{
+  "name": "hakrana-letifora",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "14.2.3",
+    "react": "^18",
+    "react-dom": "^18",
+    "zustand": "^4.5.2",
+    "@supabase/supabase-js": "^2.43.1",
+    "lucide-react": "^0.383.0",
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8",
+    "autoprefixer": "^10.0.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.3"
+  }
+}
