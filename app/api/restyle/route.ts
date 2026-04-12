@@ -7,12 +7,16 @@ export const maxDuration = 60;
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { imageUrl, mimeType, settings, sourceAssetId } = body as {
+    const { imageUrl, mimeType, settings, sourceAssetId, apiKey } = body as {
       imageUrl: string;
       mimeType: string;
       settings: RestyleSettings;
       sourceAssetId: string;
+      apiKey?: string;
     };
+
+    // Allow key from request body (user-supplied via settings UI) to override env var
+    if (apiKey) process.env.GOOGLE_GEMINI_API_KEY = apiKey;
 
     if (!imageUrl || !settings) {
       return NextResponse.json({ error: 'imageUrl and settings are required' }, { status: 400 });
