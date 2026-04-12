@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRestyleProvider } from '@/lib/restyle/provider';
-import { put } from '@vercel/blob';
 import { GeneratedAsset, RestyleSettings } from '@/lib/types';
 
 export const maxDuration = 60;
@@ -8,7 +7,7 @@ export const maxDuration = 60;
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { imageUrl, mimeType, settings } = body as {
+    const { imageUrl, mimeType, settings, sourceAssetId } = body as {
       imageUrl: string;
       mimeType: string;
       settings: RestyleSettings;
@@ -19,12 +18,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'imageUrl and settings are required' }, { status: 400 });
     }
 
-    // Fetch source image to base64
-    const imgRes = await fetch(imageUrl);
-    if (!imgRes.ok) throw new Error(`Failed to fetch source image: ${imgRes.status}`);
-    const imgBuffer = await imgRes.arrayBuffer();
-    const imageBase64 = Buffer.from(imgBuffer).toString('base64');
-    const resolvedMime = mimeType || imgRes.headers.get('content-type') || 'image/jpeg';
+    // Support both data URLs and remote URLs
+    let imageBase64: string;
+    let resolvedMime: string;
+
+    if (imageUrl.startsWith('data:')) {
+      const comma = imageUrl.indexOf(',');
+      imageBase64 = imageUrl.slice(comma + 1);
+      resolvedMime = imageUrl.slice(5, imageUrl.indexOf(';')) || mimeType || 'image/jpeg';
+    } else {
+      const imgRes = await fetch(imageUrl);
+      if (!imgRes.ok) throw new Error(`Failed to fetch source image: ${imgRes.status}`);
+      imageBase64 = Buffer.from(await imgRes.arrayBuffer()).toString('base64');
+      resolvedMime = mimeType || imgRes.headers.get('content-type') || 'image/jpeg';
+    }
 
     // Call provider
     const provider = getRestyleProvider();
@@ -35,21 +42,16 @@ export async function POST(req: NextRequest) {
       settings,
     });
 
-    // Upload result to Vercel Blob
+    // Return as data URL — no Blob storage needed
     const id = crypto.randomUUID();
-    const ext = result.mimeType.split('/')[1] ?? 'jpg';
-    const imgBytes = Buffer.from(result.imageBase64, 'base64');
-    const blob = await put(`generated/restyle/${id}.${ext}`, imgBytes, {
-      access: 'public',
-      contentType: result.mimeType,
-    });
+    const resultDataUrl = `data:${result.mimeType};base64,${result.imageBase64}`;
 
     const asset: GeneratedAsset = {
       id,
-      url: blob.url,
+      url: resultDataUrl,
       mode: 'restyle',
       settings,
-      sourceAssetId: body.sourceAssetId ?? '',
+      sourceAssetId: sourceAssetId ?? '',
       createdAt: new Date().toISOString(),
     };
 

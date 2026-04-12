@@ -20,27 +20,61 @@ export default function TopBar() {
   const hasImage = !!project.uploadedAsset;
   const selectedAsset = generatedAssets.find((a) => a.id === selectedResultId);
 
-  // ── Upload ──────────────────────────────────────────────────────────────
+  // ── Upload (client-side — no server required) ───────────────────────────
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
 
+    const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!ALLOWED.includes(file.type)) {
+      setUploadError(`Unsupported type. Use JPEG, PNG, WebP or GIF.`);
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      setUploadError('File too large. Max 20 MB.');
+      return;
+    }
+
     setUploading(true);
     setUploadError(null);
 
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Upload failed');
-      setUploadedAsset(json.asset as UploadedAsset);
+      const dataUrl = await readAsDataURL(file);
+      const { width, height } = await measureImage(dataUrl);
+      const asset: UploadedAsset = {
+        id: crypto.randomUUID(),
+        url: dataUrl,
+        originalName: file.name,
+        mimeType: file.type,
+        width,
+        height,
+        uploadedAt: new Date().toISOString(),
+      };
+      setUploadedAsset(asset);
     } catch (err: any) {
       setUploadError(err?.message ?? 'Upload failed');
     } finally {
       setUploading(false);
     }
+  }
+
+  function readAsDataURL(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function measureImage(src: string): Promise<{ width: number; height: number }> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      img.onerror = () => resolve({ width: 0, height: 0 });
+      img.src = src;
+    });
   }
 
   // ── Generate ────────────────────────────────────────────────────────────

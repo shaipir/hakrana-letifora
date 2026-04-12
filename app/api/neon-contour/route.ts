@@ -10,7 +10,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
 import { GeneratedAsset, NeonContourSettings } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -29,24 +28,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'imageUrl and settings are required' }, { status: 400 });
     }
 
-    // Fetch image
-    const imgRes = await fetch(imageUrl);
-    if (!imgRes.ok) throw new Error(`Failed to fetch source image: ${imgRes.status}`);
-    const imgBuffer = Buffer.from(await imgRes.arrayBuffer());
+    // Support both data URLs and remote URLs
+    let imgBuffer: Buffer;
+    if (imageUrl.startsWith('data:')) {
+      const comma = imageUrl.indexOf(',');
+      imgBuffer = Buffer.from(imageUrl.slice(comma + 1), 'base64');
+    } else {
+      const imgRes = await fetch(imageUrl);
+      if (!imgRes.ok) throw new Error(`Failed to fetch source image: ${imgRes.status}`);
+      imgBuffer = Buffer.from(await imgRes.arrayBuffer());
+    }
 
     // Process via server-side canvas pipeline
     const pngBuffer = await processNeonContourServerSide(imgBuffer, settings);
 
-    // Upload to Vercel Blob
+    // Return as data URL — no Blob storage needed
     const id = crypto.randomUUID();
-    const blob = await put(`generated/neon-contour/${id}.png`, pngBuffer, {
-      access: 'public',
-      contentType: 'image/png',
-    });
+    const resultDataUrl = `data:image/png;base64,${pngBuffer.toString('base64')}`;
 
     const asset: GeneratedAsset = {
       id,
-      url: blob.url,
+      url: resultDataUrl,
       mode: 'neon-contour',
       settings,
       sourceAssetId: sourceAssetId ?? '',
