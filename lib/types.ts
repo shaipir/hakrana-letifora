@@ -61,3 +61,125 @@ export interface ProjectState {
   frameRate: number;
   loopDuration: number;
 }
+
+// ─── ArtRevive Domain Types ────────────────────────────────────────────────
+
+export type ArtReviveMode = 'restyle' | 'neon-contour';
+
+export type RestylePreset =
+  | 'neon-projection'
+  | 'dark-futuristic'
+  | 'electric-energy'
+  | 'liquid-light'
+  | 'minimal-glow'
+  | 'glowing-sculpture';
+
+export type NeonAnimationMode = 'flow' | 'pulse' | 'electric';
+export type FlowDirection = 'left-right' | 'right-left' | 'top-bottom' | 'bottom-top' | 'radial';
+
+export interface RestyleSettings {
+  prompt: string;
+  preset: RestylePreset;
+  preserveStructure: number;    // 0–1
+  stylizationStrength: number;  // 0–1
+  backgroundDarkness: number;   // 0–1
+  glowAmount: number;           // 0–1
+  subjectClarity: number;       // 0–1
+  detailRetention: number;      // 0–1
+}
+
+export interface NeonContourSettings {
+  edgeSensitivity: number;        // 0–1
+  lineThickness: number;          // 1–10 px
+  lineDensity: number;            // 0–1
+  contourSimplification: number;  // 0–1
+  backgroundDarkness: number;     // 0–1
+  neonColor: string;              // hex
+  glowStrength: number;           // 0–1
+  animationMode: NeonAnimationMode;
+  speed: number;                  // 0–1
+  flowDirection: FlowDirection;
+}
+
+export interface UploadedAsset {
+  id: string;
+  url: string;
+  originalName: string;
+  mimeType: string;
+  width: number;
+  height: number;
+  uploadedAt: string;
+}
+
+export interface GeneratedAsset {
+  id: string;
+  url: string;
+  mode: ArtReviveMode;
+  settings: RestyleSettings | NeonContourSettings;
+  sourceAssetId: string;
+  createdAt: string;
+}
+
+export interface ArtworkProject {
+  id: string;
+  name: string;
+  uploadedAsset: UploadedAsset | null;
+  generatedAssets: GeneratedAsset[];
+  activeMode: ArtReviveMode;
+  restyleSettings: RestyleSettings;
+  neonContourSettings: NeonContourSettings;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GenerationResult {
+  success: boolean;
+  asset?: GeneratedAsset;
+  error?: string;
+}
+
+export interface ExportRequest {
+  assetId: string;
+  format: 'png' | 'jpg' | 'webp';
+  quality?: number; // 0–1 for jpg/webp
+}
+
+export interface ExportResult {
+  success: boolean;
+  url?: string;
+  filename?: string;
+  error?: string;
+}
+
+// ─── Future 2D-to-3D Pipeline (placeholders) ──────────────────────────────
+
+export interface ThreeDGenerationRequest {
+  sourceAssetId: string;
+  prompt?: string;
+  outputFormat: 'glb' | 'obj' | 'splat';
+}
+
+export interface ThreeDGenerationJob {
+  id: string;
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  sourceAssetId: string;
+  createdAt: string;
+  completedAt?: string;
+  error?: string;
+}
+
+export interface ThreeDAsset {
+  id: string;
+  jobId: string;
+  url: string;
+  format: 'glb' | 'obj' | 'splat';
+  createdAt: string;
+}
+
+export interface ThreeDPreviewState {
+  isLoading: boolean;
+  asset: ThreeDAsset | null;
+  rotationX: number;
+  rotationY: number;
+  zoom: number;
+}

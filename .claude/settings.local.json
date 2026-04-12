@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__mcp-registry__search_mcp_registry",
+      "mcp__mcp-registry__suggest_connectors",
+      "Bash(node -e \"const fs=require\\('fs'\\); const data=JSON.parse\\(fs.readFileSync\\('C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\Shai\\\\\\\\\\\\\\\\.claude\\\\\\\\\\\\\\\\projects\\\\\\\\\\\\\\\\C--Users-Shai-projects-hakrana-letifora--claude-worktrees-zealous-nash\\\\\\\\\\\\\\\\ace6df90-8f88-4dcb-92ae-83173c5f52bd\\\\\\\\\\\\\\\\tool-results\\\\\\\\\\\\\\\\toolu_01XRg9N4WqyJxbedYaQWsYTs.json','utf8'\\)\\); fs.writeFileSync\\('C:\\\\\\\\\\\\\\\\Users\\\\\\\\\\\\\\\\Shai\\\\\\\\\\\\\\\\projects\\\\\\\\\\\\\\\\plan_raw.txt', data[0].text\\);\")",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
