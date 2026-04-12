@@ -2,14 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #0a0a0a;
+  background: #080808;
   color: #fff;
   font-family: 'Inter', sans-serif;
   overflow: hidden;
@@ -19,6 +15,16 @@ body {
 ::-webkit-scrollbar-track { background: #111; }
 ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
-.canvas-cursor-crosshair { cursor: crosshair; }
-.canvas-cursor-grab { cursor: grab; }
-.canvas-cursor-grabbing { cursor: grabbing; }
+.glass {
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.accent-glow { box-shadow: 0 0 20px rgba(124,92,252,0.4); }
+
+@keyframes pulse-slow { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.animate-pulse-slow { animation: pulse-slow 2s ease-in-out infinite; }
+
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+.animate-float { animation: float 3s ease-in-out infinite; }

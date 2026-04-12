@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'הקרנה לתפאורה',
-  description: 'אפליקציית Projection Mapping לתפאורה ולאמנות',
+  description: 'AI Projection Mapping Tool',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
