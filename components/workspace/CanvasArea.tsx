@@ -23,17 +23,42 @@ export default function CanvasArea() {
   const selectedResult = project.generatedAssets.find((a) => a.id === selectedResultId);
   const source = project.uploadedAsset;
 
-  // ── Upload via drag/drop or click ────────────────────────────────────────
+  // ── Upload via drag/drop or click (client-side — no server) ─────────────
   async function uploadFile(file: File) {
+    const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!ALLOWED.includes(file.type)) {
+      setUploadError('Unsupported type. Use JPEG, PNG, WebP or GIF.');
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      setUploadError('File too large. Max 20 MB.');
+      return;
+    }
     setUploading(true);
     setUploadError(null);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Upload failed');
-      setUploadedAsset(json.asset as UploadedAsset);
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result as string);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      const { w, h } = await new Promise<{ w: number; h: number }>((resolve) => {
+        const img = new window.Image();
+        img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+        img.onerror = () => resolve({ w: 0, h: 0 });
+        img.src = dataUrl;
+      });
+      const asset: UploadedAsset = {
+        id: crypto.randomUUID(),
+        url: dataUrl,
+        originalName: file.name,
+        mimeType: file.type,
+        width: w,
+        height: h,
+        uploadedAt: new Date().toISOString(),
+      };
+      setUploadedAsset(asset);
     } catch (err: any) {
       setUploadError(err?.message ?? 'Upload failed');
     } finally {
