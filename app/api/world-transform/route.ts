@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       const pollUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
 
       const imgRes = await fetch(pollUrl, {
-        signal: AbortSignal.timeout(50000),
+        signal: AbortSignal.timeout(55000),
       });
 
       if (imgRes.ok) {

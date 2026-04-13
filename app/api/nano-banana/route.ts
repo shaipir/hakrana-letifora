@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       const imgRes = await fetch(pollinationsUrl, {
         headers: { 'Accept': 'image/*' },
         // Pollinations can be slow — give it 50s
-        signal: AbortSignal.timeout(50000),
+        signal: AbortSignal.timeout(55000),
       });
 
       if (imgRes.ok) {

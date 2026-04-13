@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
       const encoded = encodeURIComponent(transformPrompt.slice(0, 500));
       const seed = Math.floor(Math.random() * 99999);
       const url = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
-      const imgRes = await fetch(url, { signal: AbortSignal.timeout(50000) });
+      const imgRes = await fetch(url, { signal: AbortSignal.timeout(55000) });
       if (imgRes.ok) {
         providerUsed = 'pollinations';
         modelUsed = 'flux';

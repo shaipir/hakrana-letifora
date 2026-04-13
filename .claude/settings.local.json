@@ -7,7 +7,19 @@
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git config:*)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Read(//c/Users/Shai/.config/vercel/**)",
+      "Bash(curl -s \"https://api.vercel.com/v9/projects/prj_cjNH5DfXN3rUn4MKlyrLDzhTbDcS/env?teamId=team_0fNlOYitxSZiugl6EG5pGH0d\" -H \"Authorization: Bearer $\\(cat ~/.config/vercel/auth.json)",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); [print\\(e.get\\('key'\\), e.get\\('target'\\)\\) for e in data.get\\('envs',[]\\)]\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.keys\\(\\)\\)\\)\")",
+      "Read(//c/Users/Shai/.vercel/**)",
+      "Bash(sed -i 's/gemini-2\\\\.0-flash-preview-image-generation/gemini-2.5-flash-preview-04-17/g' app/api/house-projection/route.ts app/api/nano-banana/route.ts app/api/world-transform/route.ts app/api/google-imagen/route.ts)",
+      "Bash(sed -i 's/gemini-2\\\\.0-flash-exp/gemini-2.5-flash-preview-04-17/g' app/api/house-projection/route.ts app/api/nano-banana/route.ts app/api/world-transform/route.ts app/api/google-imagen/route.ts)",
+      "Bash(sed -i 's/gemini-1\\\\.5-flash/gemini-2.5-flash-preview-04-17/g' app/api/house-projection/route.ts app/api/nano-banana/route.ts app/api/world-transform/route.ts app/api/google-imagen/route.ts)"
     ]
   }
 }
