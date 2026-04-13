@@ -162,6 +162,21 @@ export interface ExportResult {
   error?: string;
 }
 
+// ─── Art Direction Types ───────────────────────────────────────────────────
+
+export type ArtDirectionId =
+  | 'fluid-dynamics' | 'fibonacci-spiral' | 'volcanic-glass' | 'neon-glitch'
+  | 'watercolor-bleed' | 'voronoi-earth' | 'smoke-architecture' | 'chromatic-fluid';
+
+export interface ArtDirectionPreset {
+  id: ArtDirectionId;
+  label: string;
+  emoji: string;
+  tagline: string;
+  prompt: string;
+  canvasWorldFallback: string;
+}
+
 // ─── Future 2D-to-3D Pipeline (placeholders) ──────────────────────────────
 
 export interface ThreeDGenerationRequest {

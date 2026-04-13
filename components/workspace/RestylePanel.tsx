@@ -3,6 +3,7 @@
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import { StyleWorld } from '@/lib/types';
 import { STYLE_WORLD_PRESETS } from '@/lib/restyle/presets';
+import { ART_DIRECTION_PRESETS } from '@/lib/restyle/art-direction-presets';
 
 // Split into visionary (top) and world (bottom) groups
 const VISIONARY_PRESETS = STYLE_WORLD_PRESETS.filter((p) =>
@@ -33,6 +34,37 @@ export default function RestylePanel() {
       <div>
         <p className="text-xs font-bold text-ar-text uppercase tracking-widest">World Rebuild</p>
         <p className="text-[10px] text-ar-text-dim mt-0.5">Structural re-creation into a new world</p>
+      </div>
+
+      {/* ── Art Direction ─────────────────────────────────────────────── */}
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{color: '#ff6b35'}}>
+          ⚡ Art Direction
+        </p>
+        <p className="text-[10px] text-ar-text-dim mb-2">AI-generated from prompt. Requires Gemini key in Settings.</p>
+        <div className="flex flex-col gap-1.5">
+          {ART_DIRECTION_PRESETS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => {
+                updateRestyleSettings({ styleWorld: null, customStylePrompt: p.prompt });
+              }}
+              className={`w-full flex items-start gap-2 px-3 py-2 rounded-lg border text-left transition-all ${
+                s.customStylePrompt === p.prompt
+                  ? 'border-orange-500/60 bg-orange-500/10'
+                  : 'border-ar-border bg-ar-surface hover:border-orange-500/30'
+              }`}
+            >
+              <span className="text-base leading-none mt-0.5">{p.emoji}</span>
+              <div>
+                <p className={`text-xs font-semibold ${s.customStylePrompt === p.prompt ? 'text-orange-400' : 'text-ar-text'}`}>
+                  {p.label}
+                </p>
+                <p className="text-[10px] text-ar-text-dim leading-tight mt-0.5">{p.tagline}</p>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── Visionary presets ────────────────────────────────────────── */}

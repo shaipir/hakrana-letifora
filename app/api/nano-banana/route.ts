@@ -1,52 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// ננו בננה style generation endpoint
-// TODO: replace with real Nano Banana API when credentials available
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
+// Try multiple Gemini image generation models in sequence
+const IMAGE_GEN_MODELS = [
+  'gemini-2.0-flash-preview-image-generation',
+  'gemini-2.0-flash-exp',
+];
+
 export async function POST(req: NextRequest) {
-  const { prompt, region, mood, intensity } = await req.json();
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2048,
-      messages: [{
-        role: 'user',
-        content: `You are a Nano Banana visual style generator for projection mapping.
-
-Generate 6 unique visual styles for projecting onto: "${region?.label || 'surface'}"
-User style request: "${prompt}"
-Mood: ${mood || 'any'}
-Intensity: ${intensity || 'medium'}
-
-Return ONLY valid JSON array of 6 style objects:
-[{
-  "id": "style_1",
-  "name": "style name (creative, evocative)",
-  "tagline": "one sentence tagline",
-  "effect": "one of: kaleidoscope|fire|mirror|glitch|colorshift|tunnel|dream|cosmic|none",
-  "palette": ["#hex1", "#hex2", "#hex3", "#hex4"],
-  "animation": "description of movement/animation",
-  "depth3D": 0.5,
-  "intensity": 0.7,
-  "tags": ["tag1", "tag2", "tag3"],
-  "projectionTip": "practical tip for projecting this style"
-}]`
-      }]
-    })
-  });
-
-  const data = await res.json();
-  const text = data.content?.[0]?.text ?? '[]';
   try {
-    const parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
-    return NextResponse.json({ styles: parsed });
-  } catch {
-    return NextResponse.json({ styles: [], raw: text }, { status: 500 });
+    const body = await req.json();
+    const { prompt, imageBase64, mimeType, apiKey: bodyKey } = body as {
+      prompt: string;
+      imageBase64?: string;
+      mimeType?: string;
+      apiKey?: string;
+    };
+
+    const apiKey = bodyKey || process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'No Gemini API key. Add it in Settings (⚙).' }, { status: 400 });
+    }
+
+    if (!prompt) {
+      return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
+    }
+
+    // Build request — include source image if provided
+    const parts: any[] = [];
+    if (imageBase64 && mimeType) {
+      parts.push({ inline_data: { mime_type: mimeType, data: imageBase64 } });
+    }
+    parts.push({ text: prompt });
+
+    const requestBody = {
+      contents: [{ parts }],
+      generationConfig: {
+        responseModalities: ['IMAGE', 'TEXT'],
+        temperature: 0.9,
+      },
+    };
+
+    let lastError = '';
+    for (const model of IMAGE_GEN_MODELS) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        lastError = `${model}: ${text.slice(0, 200)}`;
+        continue; // try next model
+      }
+
+      const json = await res.json();
+      const candidates = json?.candidates ?? [];
+      for (const candidate of candidates) {
+        const imgPart = candidate?.content?.parts?.find(
+          (p: any) => p.inline_data?.mime_type?.startsWith('image/')
+        );
+        if (imgPart) {
+          const dataUrl = `data:${imgPart.inline_data.mime_type};base64,${imgPart.inline_data.data}`;
+          return NextResponse.json({ url: dataUrl }, { status: 200 });
+        }
+      }
+      lastError = `${model}: no image in response`;
+    }
+
+    return NextResponse.json(
+      { error: `Gemini image generation failed. ${lastError}` },
+      { status: 500 }
+    );
+  } catch (err: any) {
+    console.error('[nano-banana]', err);
+    return NextResponse.json({ error: err?.message ?? 'Generation failed' }, { status: 500 });
   }
 }

@@ -110,11 +110,54 @@ export default function TopBar() {
 
     try {
       if (activeMode === 'restyle') {
-        // Client-side canvas restyle — no API needed
-        const resultUrl = await canvasRestyle(
-          project.uploadedAsset.url,
-          project.restyleSettings
-        );
+        const { styleWorld, customStylePrompt } = project.restyleSettings;
+
+        // If art direction preset selected (no world, has prompt), try Gemini first
+        if (!styleWorld && customStylePrompt) {
+          const storedKey = getStoredKey();
+          if (storedKey) {
+            try {
+              // Convert data URL to base64 for API
+              const imageUrl = project.uploadedAsset.url;
+              const comma = imageUrl.indexOf(',');
+              const imageBase64 = imageUrl.slice(comma + 1);
+              const mimeType = imageUrl.slice(5, imageUrl.indexOf(';'));
+
+              const res = await fetch('/api/nano-banana', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  prompt: customStylePrompt,
+                  imageBase64,
+                  mimeType,
+                  apiKey: storedKey,
+                }),
+              });
+              const json = await res.json();
+              if (res.ok && json.url) {
+                const asset: GeneratedAsset = {
+                  id: crypto.randomUUID(),
+                  url: json.url,
+                  mode: 'restyle',
+                  settings: project.restyleSettings,
+                  sourceAssetId: project.uploadedAsset.id,
+                  createdAt: new Date().toISOString(),
+                };
+                addGeneratedAsset(asset);
+                return; // success
+              }
+              // If Gemini failed, fall through to canvas
+              console.warn('[nano-banana] fell back to canvas:', json.error);
+            } catch (e) {
+              console.warn('[nano-banana] error, using canvas fallback');
+            }
+          }
+        }
+
+        // Canvas world transform (default path)
+        const worldForCanvas = project.restyleSettings.styleWorld ?? 'bioluminescent';
+        const settingsForCanvas = { ...project.restyleSettings, styleWorld: worldForCanvas };
+        const resultUrl = await canvasRestyle(project.uploadedAsset.url, settingsForCanvas);
         const asset: GeneratedAsset = {
           id: crypto.randomUUID(),
           url: resultUrl,
