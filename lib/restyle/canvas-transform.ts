@@ -6,7 +6,7 @@
  * and composition but completely reinvents the visual content.
  */
 
-import { RestyleSettings, StyleWorld } from '../types';
+import { RestyleSettings, StyleWorld, WorldPreset } from '../types';
 
 interface RGB { r: number; g: number; b: number }
 
@@ -37,6 +37,7 @@ interface WorldConfig {
   saturation: number;      // output saturation mult
 }
 
+// Keep StyleWorld for canvas configs (includes legacy visual language worlds)
 const W_CONFIGS: Record<StyleWorld, WorldConfig> = {
   forest: {
     darkColor:   { r: 8,   g: 25,  b: 5   },
@@ -228,12 +229,14 @@ export async function canvasRestyle(
 function worldTransform(img: HTMLImageElement, settings: RestyleSettings): string {
   const W = img.naturalWidth;
   const H = img.naturalHeight;
-  const cfg = settings.styleWorld ? W_CONFIGS[settings.styleWorld] : W_CONFIGS.forest;
+  // Map new worldPreset to StyleWorld for canvas config lookup
+  const styleWorldKey: StyleWorld | null = settings.worldPreset as StyleWorld | null;
+  const cfg = styleWorldKey ? W_CONFIGS[styleWorldKey] ?? W_CONFIGS.forest : W_CONFIGS.forest;
 
   const transformStr  = settings.transformStrength;
   const matStr        = settings.redesignMaterials;
   const envStr        = settings.redesignEnvironment;
-  const charStr       = settings.redesignCharacters;
+  const charStr       = 1 - settings.identityPreservation; // rebuild characters = less preservation
   const preserveStr   = settings.preserveStructure;
   const fantasy       = settings.fantasyStrength;
   const atmosphere    = settings.atmosphereStrength;
@@ -339,7 +342,7 @@ function worldTransform(img: HTMLImageElement, settings: RestyleSettings): strin
   outCv.ctx.putImageData(outData, 0, 0);
 
   // ── Kaleidoscopic: 4-fold mirror symmetry ──────────────────────────────
-  if (settings.styleWorld === 'kaleidoscopic') {
+  if ((settings as any).styleWorld === 'kaleidoscopic') {
     const mirrorCv = mc(W, H);
     // top-left quadrant → mirror to all 4 quadrants
     const hw = Math.floor(W/2), hh = Math.floor(H/2);

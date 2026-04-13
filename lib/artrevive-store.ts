@@ -11,15 +11,21 @@ import {
 // ─── Defaults ──────────────────────────────────────────────────────────────
 
 export const DEFAULT_RESTYLE_SETTINGS: RestyleSettings = {
-  styleWorld: 'forest',
+  mode: 'preserve-characters',
+  worldPreset: 'forest',
+  visualLanguage: 'none',
   customStylePrompt: '',
-  preserveStructure: 0.7,
-  redesignCharacters: 0.85,
-  redesignMaterials: 0.9,
-  redesignEnvironment: 0.9,
-  realismVsStylization: 0.6,
-  fantasyStrength: 0.8,
+  preserveStructure: 0.85,
+  identityPreservation: 0.9,
+  facePreservation: 0.9,
+  posePreservation: 0.85,
+  redesignMaterials: 0.8,
+  redesignEnvironment: 0.85,
+  fantasyStrength: 0.7,
+  realismVsStylization: 0.5,
   atmosphereStrength: 0.75,
+  reshapeStrength: 0.0,
+  customReshapePrompt: '',
   transformStrength: 0.85,
 };
 

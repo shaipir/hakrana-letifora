@@ -83,17 +83,35 @@ export interface StyleWorldPreset {
   colorKeywords: string[];
 }
 
+export type RestyleMode = 'preserve-characters' | 'rebuild-characters';
+
+export type WorldPreset =
+  | 'forest' | 'sea' | 'fire' | 'spirit' | 'cartoon'
+  | 'ice' | 'crystal' | 'shadow' | 'floral' | 'machine';
+
+export type VisualLanguagePreset =
+  | 'bioluminescent' | 'sacred-geometry' | 'mandala' | 'deep-dream' | 'visionary' | 'none';
+
 export interface RestyleSettings {
-  styleWorld: StyleWorld | null;
+  mode: RestyleMode;
+  worldPreset: WorldPreset | null;
+  visualLanguage: VisualLanguagePreset;
   customStylePrompt: string;
-  preserveStructure: number;           // 0–1: how much silhouette/composition to keep
-  redesignCharacters: number;          // 0–1: how much to reinvent the figures/beings
-  redesignMaterials: number;           // 0–1: how much to rebuild surfaces/textures
-  redesignEnvironment: number;         // 0–1: how much to rebuild background/world
-  realismVsStylization: number;        // 0–1: 0=realistic creature, 1=fully stylized
-  fantasyStrength: number;             // 0–1: how mythic/imaginative the result is
-  atmosphereStrength: number;          // 0–1: environmental mood intensity
-  transformStrength: number;           // 0–1: overall transformation power
+  // Preservation
+  preserveStructure: number;        // 0–1
+  identityPreservation: number;     // 0–1
+  facePreservation: number;         // 0–1
+  posePreservation: number;         // 0–1
+  // Transformation
+  redesignMaterials: number;        // 0–1
+  redesignEnvironment: number;      // 0–1
+  fantasyStrength: number;          // 0–1
+  realismVsStylization: number;     // 0–1
+  atmosphereStrength: number;       // 0–1
+  // Reshape
+  reshapeStrength: number;          // 0–1
+  customReshapePrompt: string;
+  transformStrength: number;        // 0–1 overall
 }
 
 export type NeonAnimationMode = 'flow' | 'pulse' | 'electric';

@@ -133,7 +133,7 @@ export function getRestyleProvider(): RestyleProvider {
 // ─── Prompt Builder ──────────────────────────────────────────────────────────
 
 function buildPrompt(settings: RestyleSettings, imageDescription?: string): string {
-  const world = settings.styleWorld ?? 'forest';
+  const world = settings.worldPreset ?? 'forest';
   const worldBase = `Transform this image into a ${world} world aesthetic.`;
   const userPrompt = settings.customStylePrompt.trim();
   const subject = imageDescription ? `Subject: ${imageDescription}.` : '';

@@ -130,54 +130,35 @@ export default function TopBar() {
 
     try {
       if (activeMode === 'restyle') {
-        const { styleWorld, customStylePrompt } = project.restyleSettings;
+        const { base64: imageBase64, mimeType } = await resizeImageForApi(
+          project.uploadedAsset.url, 1024
+        );
+        const storedKey = getStoredKey();
 
-        // If art direction preset selected (no world, has prompt), try Gemini first
-        if (!styleWorld && customStylePrompt) {
-          const storedKey = getStoredKey();
-          if (storedKey) {
-            try {
-              // Resize image to max 1024px before sending (avoids Vercel 4.5MB body limit)
-              const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1024);
+        const res = await fetch('/api/world-transform', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64,
+            mimeType,
+            settings: project.restyleSettings,
+            apiKey: storedKey || undefined,
+          }),
+        });
 
-              const res = await fetch('/api/nano-banana', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  prompt: customStylePrompt,
-                  imageBase64,
-                  mimeType,
-                  apiKey: storedKey,
-                }),
-              });
-              const json = await res.json();
-              if (res.ok && json.url) {
-                const asset: GeneratedAsset = {
-                  id: crypto.randomUUID(),
-                  url: json.url,
-                  mode: 'restyle',
-                  settings: project.restyleSettings,
-                  sourceAssetId: project.uploadedAsset.id,
-                  createdAt: new Date().toISOString(),
-                };
-                addGeneratedAsset(asset);
-                return; // success
-              }
-              // If Gemini failed, fall through to canvas
-              console.warn('[nano-banana] fell back to canvas:', json.error);
-            } catch (e) {
-              console.warn('[nano-banana] error, using canvas fallback');
-            }
-          }
+        const json = await res.json();
+
+        if (!res.ok) {
+          throw new Error(json.error ?? 'World Transform failed');
         }
 
-        // Canvas world transform (default path)
-        const worldForCanvas = project.restyleSettings.styleWorld ?? 'bioluminescent';
-        const settingsForCanvas = { ...project.restyleSettings, styleWorld: worldForCanvas };
-        const resultUrl = await canvasRestyle(project.uploadedAsset.url, settingsForCanvas);
+        if (json.fallback) {
+          setGenerateError(`Note: Using ${json.model} fallback (Gemini key not set or unavailable)`);
+        }
+
         const asset: GeneratedAsset = {
           id: crypto.randomUUID(),
-          url: resultUrl,
+          url: json.url,
           mode: 'restyle',
           settings: project.restyleSettings,
           sourceAssetId: project.uploadedAsset.id,
