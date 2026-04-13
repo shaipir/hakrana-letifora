@@ -17,13 +17,14 @@ const WORLDS: { id: StyleWorld; label: string; emoji: string; desc: string }[] =
 ];
 
 const SLIDERS = [
-  { key: 'transformStrength',              label: 'Transform Strength' },
-  { key: 'preserveSubject',               label: 'Preserve Subject' },
-  { key: 'materialTransformationStrength', label: 'Material Transform' },
-  { key: 'environmentTransformationStrength', label: 'Environment Transform' },
-  { key: 'realismVsStylization',          label: 'Realism → Stylization' },
-  { key: 'backgroundIntegration',         label: 'Background Integration' },
-  { key: 'atmosphereStrength',            label: 'Atmosphere' },
+  { key: 'transformStrength',     label: 'Transform Strength' },
+  { key: 'preserveStructure',     label: 'Preserve Structure' },
+  { key: 'redesignCharacters',    label: 'Redesign Characters' },
+  { key: 'redesignMaterials',     label: 'Redesign Materials' },
+  { key: 'redesignEnvironment',   label: 'Redesign Environment' },
+  { key: 'fantasyStrength',       label: 'Fantasy Strength' },
+  { key: 'realismVsStylization',  label: 'Realism → Stylization' },
+  { key: 'atmosphereStrength',    label: 'Atmosphere' },
 ] as const;
 
 export default function RestylePanel() {
@@ -34,8 +35,8 @@ export default function RestylePanel() {
     <aside className="w-64 shrink-0 bg-ar-panel border-r border-ar-border flex flex-col overflow-y-auto">
       {/* Header */}
       <div className="px-4 py-3 border-b border-ar-border">
-        <h2 className="text-xs font-semibold tracking-widest uppercase text-ar-accent">World Transform</h2>
-        <p className="text-xs text-ar-text-muted mt-0.5">Transform image into another world</p>
+        <h2 className="text-xs font-semibold tracking-widest uppercase text-ar-accent">WORLD REBUILD</h2>
+        <p className="text-xs text-ar-text-muted mt-0.5">Structural re-creation into a new world</p>
       </div>
 
       <div className="flex flex-col gap-5 p-4">

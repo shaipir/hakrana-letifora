@@ -73,13 +73,14 @@ export type StyleWorld =
 export interface RestyleSettings {
   styleWorld: StyleWorld | null;
   customStylePrompt: string;
-  preserveSubject: number;              // 0–1
-  transformStrength: number;            // 0–1
-  materialTransformationStrength: number; // 0–1
-  environmentTransformationStrength: number; // 0–1
-  realismVsStylization: number;         // 0–1 (0=realism, 1=full stylization)
-  backgroundIntegration: number;        // 0–1
-  atmosphereStrength: number;           // 0–1
+  preserveStructure: number;           // 0–1: how much silhouette/composition to keep
+  redesignCharacters: number;          // 0–1: how much to reinvent the figures/beings
+  redesignMaterials: number;           // 0–1: how much to rebuild surfaces/textures
+  redesignEnvironment: number;         // 0–1: how much to rebuild background/world
+  realismVsStylization: number;        // 0–1: 0=realistic creature, 1=fully stylized
+  fantasyStrength: number;             // 0–1: how mythic/imaginative the result is
+  atmosphereStrength: number;          // 0–1: environmental mood intensity
+  transformStrength: number;           // 0–1: overall transformation power
 }
 
 export type NeonAnimationMode = 'flow' | 'pulse' | 'electric';

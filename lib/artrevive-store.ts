@@ -13,13 +13,14 @@ import {
 export const DEFAULT_RESTYLE_SETTINGS: RestyleSettings = {
   styleWorld: 'forest',
   customStylePrompt: '',
-  preserveSubject: 0.75,
-  transformStrength: 0.8,
-  materialTransformationStrength: 0.7,
-  environmentTransformationStrength: 0.75,
+  preserveStructure: 0.7,
+  redesignCharacters: 0.85,
+  redesignMaterials: 0.9,
+  redesignEnvironment: 0.9,
   realismVsStylization: 0.6,
-  backgroundIntegration: 0.8,
-  atmosphereStrength: 0.7,
+  fantasyStrength: 0.8,
+  atmosphereStrength: 0.75,
+  transformStrength: 0.85,
 };
 
 export const DEFAULT_NEON_CONTOUR_SETTINGS: NeonContourSettings = {
