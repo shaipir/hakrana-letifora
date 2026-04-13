@@ -84,6 +84,26 @@ export default function TopBar() {
     }
   }
 
+  // Resize image to maxPx on longest side, return base64 + mimeType
+  function resizeImageForApi(dataUrl: string, maxPx: number): Promise<{ base64: string; mimeType: string }> {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxPx / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.round(img.naturalWidth * scale);
+        const h = Math.round(img.naturalHeight * scale);
+        const cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        cv.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        const resized = cv.toDataURL('image/jpeg', 0.85);
+        const comma = resized.indexOf(',');
+        resolve({ base64: resized.slice(comma + 1), mimeType: 'image/jpeg' });
+      };
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+  }
+
   function readAsDataURL(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const r = new FileReader();
@@ -117,11 +137,8 @@ export default function TopBar() {
           const storedKey = getStoredKey();
           if (storedKey) {
             try {
-              // Convert data URL to base64 for API
-              const imageUrl = project.uploadedAsset.url;
-              const comma = imageUrl.indexOf(',');
-              const imageBase64 = imageUrl.slice(comma + 1);
-              const mimeType = imageUrl.slice(5, imageUrl.indexOf(';'));
+              // Resize image to max 1024px before sending (avoids Vercel 4.5MB body limit)
+              const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1024);
 
               const res = await fetch('/api/nano-banana', {
                 method: 'POST',
