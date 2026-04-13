@@ -6,6 +6,7 @@ import {
   GeneratedAsset,
   RestyleSettings,
   NeonContourSettings,
+  HouseProjectionSettings,
 } from './types';
 
 // ─── Defaults ──────────────────────────────────────────────────────────────
@@ -27,6 +28,20 @@ export const DEFAULT_RESTYLE_SETTINGS: RestyleSettings = {
   reshapeStrength: 0.0,
   customReshapePrompt: '',
   transformStrength: 0.85,
+};
+
+export const DEFAULT_HOUSE_PROJECTION_SETTINGS: HouseProjectionSettings = {
+  worldPreset: 'forest',
+  customStylePrompt: '',
+  geometryPreservation: 0.95,
+  facadePreservation: 0.92,
+  windowAlignmentPreservation: 0.9,
+  surfaceTransformationStrength: 0.85,
+  projectionIntensity: 0.88,
+  glowAmount: 0.75,
+  darknessContrast: 0.8,
+  ornamentationLevel: 0.7,
+  atmosphereStrength: 0.75,
 };
 
 export const DEFAULT_NEON_CONTOUR_SETTINGS: NeonContourSettings = {
@@ -51,6 +66,7 @@ function makeDefaultProject(): ArtworkProject {
     activeMode: 'restyle',
     restyleSettings: { ...DEFAULT_RESTYLE_SETTINGS },
     neonContourSettings: { ...DEFAULT_NEON_CONTOUR_SETTINGS },
+    houseProjectionSettings: { ...DEFAULT_HOUSE_PROJECTION_SETTINGS },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -74,6 +90,7 @@ interface ArtReviveState {
   clearUploadedAsset: () => void;
   updateRestyleSettings: (settings: Partial<RestyleSettings>) => void;
   updateNeonContourSettings: (settings: Partial<NeonContourSettings>) => void;
+  updateHouseProjectionSettings: (partial: Partial<HouseProjectionSettings>) => void;
   addGeneratedAsset: (asset: GeneratedAsset) => void;
   selectResult: (id: string | null) => void;
   setUploading: (v: boolean) => void;
@@ -139,6 +156,15 @@ export const useArtReviveStore = create<ArtReviveState>((set, get) => ({
       project: {
         ...s.project,
         neonContourSettings: { ...s.project.neonContourSettings, ...settings },
+        updatedAt: new Date().toISOString(),
+      },
+    })),
+
+  updateHouseProjectionSettings: (partial) =>
+    set((s) => ({
+      project: {
+        ...s.project,
+        houseProjectionSettings: { ...s.project.houseProjectionSettings, ...partial },
         updatedAt: new Date().toISOString(),
       },
     })),

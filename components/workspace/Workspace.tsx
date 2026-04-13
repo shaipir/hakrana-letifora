@@ -4,6 +4,7 @@ import { useArtReviveStore } from '@/lib/artrevive-store';
 import TopBar from './TopBar';
 import RestylePanel from './RestylePanel';
 import NeonContourPanel from './NeonContourPanel';
+import HouseProjectionPanel from './HouseProjectionPanel';
 import CanvasArea from './CanvasArea';
 import HistoryPanel from './HistoryPanel';
 
@@ -18,7 +19,7 @@ export default function Workspace() {
       {/* Main workspace */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left panel: mode-specific controls */}
-        {activeMode === 'restyle' ? <RestylePanel /> : <NeonContourPanel />}
+        {activeMode === 'restyle' ? <RestylePanel /> : activeMode === 'neon-contour' ? <NeonContourPanel /> : <HouseProjectionPanel />}
 
         {/* Center: canvas */}
         <CanvasArea />

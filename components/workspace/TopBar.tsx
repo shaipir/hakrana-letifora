@@ -165,7 +165,7 @@ export default function TopBar() {
           createdAt: new Date().toISOString(),
         };
         addGeneratedAsset(asset);
-      } else {
+      } else if (activeMode === 'neon-contour') {
         // Neon contour — server-side
         const res = await fetch('/api/neon-contour', {
           method: 'POST',
@@ -179,6 +179,39 @@ export default function TopBar() {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? 'Generation failed');
         addGeneratedAsset(json.asset);
+      } else if (activeMode === 'house-projection') {
+        const { base64: imageBase64, mimeType } = await resizeImageForApi(
+          project.uploadedAsset.url, 1024
+        );
+        const storedKey = getStoredKey();
+
+        const res = await fetch('/api/house-projection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64,
+            mimeType,
+            settings: project.houseProjectionSettings,
+            apiKey: storedKey || undefined,
+          }),
+        });
+
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error ?? 'House Projection failed');
+
+        if (json.fallback) {
+          setGenerateError(`Note: Using ${json.model} fallback (Gemini unavailable)`);
+        }
+
+        const asset: GeneratedAsset = {
+          id: crypto.randomUUID(),
+          url: json.url,
+          mode: 'house-projection',
+          settings: project.houseProjectionSettings,
+          sourceAssetId: project.uploadedAsset.id,
+          createdAt: new Date().toISOString(),
+        };
+        addGeneratedAsset(asset);
       }
     } catch (err: any) {
       setGenerateError(err?.message ?? 'Generation failed');
@@ -236,19 +269,25 @@ export default function TopBar() {
 
         {/* Mode switch */}
         <div className="flex rounded-md border border-ar-border bg-ar-surface overflow-hidden">
-          {(['restyle', 'neon-contour'] as const).map((m) => (
+          {([
+            { id: 'restyle', label: 'Restyle' },
+            { id: 'neon-contour', label: 'Neon Contour' },
+            { id: 'house-projection', label: '🏠 House' },
+          ] as const).map((m, i, arr) => (
             <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`px-3 py-1.5 text-sm transition-colors ${
-                activeMode === m
-                  ? m === 'restyle'
-                    ? 'bg-ar-violet/20 text-ar-violet border-r border-ar-border'
-                    : 'bg-ar-accent/10 text-ar-accent'
+              key={m.id}
+              onClick={() => setMode(m.id)}
+              className={`px-3 py-1.5 text-sm transition-colors ${i < arr.length - 1 ? 'border-r border-ar-border' : ''} ${
+                activeMode === m.id
+                  ? m.id === 'restyle'
+                    ? 'bg-ar-violet/20 text-ar-violet'
+                    : m.id === 'neon-contour'
+                    ? 'bg-ar-accent/10 text-ar-accent'
+                    : 'bg-orange-500/10 text-orange-400'
                   : 'text-ar-text-muted hover:text-ar-text'
               }`}
             >
-              {m === 'restyle' ? 'Restyle' : 'Neon Contour'}
+              {m.label}
             </button>
           ))}
         </div>
@@ -263,7 +302,9 @@ export default function TopBar() {
           className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
             activeMode === 'restyle'
               ? 'bg-ar-violet hover:bg-ar-violet/80 text-white'
-              : 'bg-ar-accent/10 hover:bg-ar-accent/20 text-ar-accent border border-ar-accent/40'
+              : activeMode === 'neon-contour'
+              ? 'bg-ar-accent/10 hover:bg-ar-accent/20 text-ar-accent border border-ar-accent/40'
+              : 'bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/40'
           }`}
         >
           <Zap className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin' : ''}`} />

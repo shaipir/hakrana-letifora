@@ -64,7 +64,25 @@ export interface ProjectState {
 
 // ─── ArtRevive Domain Types ────────────────────────────────────────────────
 
-export type ArtReviveMode = 'restyle' | 'neon-contour';
+export type ArtReviveMode = 'restyle' | 'neon-contour' | 'house-projection';
+
+export type HouseWorldPreset =
+  | 'forest' | 'sea' | 'fire' | 'spirit' | 'cartoon'
+  | 'ice' | 'crystal' | 'shadow' | 'floral' | 'machine';
+
+export interface HouseProjectionSettings {
+  worldPreset: HouseWorldPreset | null;
+  customStylePrompt: string;
+  geometryPreservation: number;           // 0–1
+  facadePreservation: number;             // 0–1
+  windowAlignmentPreservation: number;    // 0–1
+  surfaceTransformationStrength: number;  // 0–1
+  projectionIntensity: number;            // 0–1
+  glowAmount: number;                     // 0–1
+  darknessContrast: number;               // 0–1
+  ornamentationLevel: number;             // 0–1
+  atmosphereStrength: number;             // 0–1
+}
 
 export type StyleWorld =
   | 'forest' | 'sea' | 'fire' | 'spirit' | 'cartoon'
@@ -144,7 +162,7 @@ export interface GeneratedAsset {
   id: string;
   url: string;
   mode: ArtReviveMode;
-  settings: RestyleSettings | NeonContourSettings;
+  settings: RestyleSettings | HouseProjectionSettings | NeonContourSettings;
   sourceAssetId: string;
   createdAt: string;
 }
@@ -157,6 +175,7 @@ export interface ArtworkProject {
   activeMode: ArtReviveMode;
   restyleSettings: RestyleSettings;
   neonContourSettings: NeonContourSettings;
+  houseProjectionSettings: HouseProjectionSettings;
   createdAt: string;
   updatedAt: string;
 }
