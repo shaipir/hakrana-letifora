@@ -6,29 +6,20 @@ import {
   GeneratedAsset,
   RestyleSettings,
   NeonContourSettings,
-  RestylePreset,
 } from './types';
 
 // ─── Defaults ──────────────────────────────────────────────────────────────
 
 export const DEFAULT_RESTYLE_SETTINGS: RestyleSettings = {
-  prompt: '',
-  preset: 'neon-projection',
-  preserveStructure: 0.75,
-  stylizationStrength: 0.7,
-  backgroundDarkness: 0.85,
-  glowAmount: 0.6,
-  subjectClarity: 0.8,
-  detailRetention: 0.65,
-};
-
-export const RESTYLE_PRESET_PROMPTS: Record<RestylePreset, string> = {
-  'neon-projection': 'Transform into neon projection art with glowing lines on a dark background',
-  'dark-futuristic': 'Dark futuristic aesthetic with electric blue and deep violet tones, minimal glow',
-  'electric-energy': 'Electric energy burst with crackling light, high contrast against black background',
-  'liquid-light': 'Fluid luminous light trails, smooth flowing curves, deep dark background',
-  'minimal-glow': 'Minimal glowing outline art, subtle ambient light, very dark background',
-  'glowing-sculpture': 'Glowing sculptural form with warm neon hues, projection-mapped look',
+  styleWorld: 'forest',
+  customStylePrompt: '',
+  preserveSubject: 0.75,
+  transformStrength: 0.8,
+  materialTransformationStrength: 0.7,
+  environmentTransformationStrength: 0.75,
+  realismVsStylization: 0.6,
+  backgroundIntegration: 0.8,
+  atmosphereStrength: 0.7,
 };
 
 export const DEFAULT_NEON_CONTOUR_SETTINGS: NeonContourSettings = {
@@ -76,7 +67,6 @@ interface ArtReviveState {
   clearUploadedAsset: () => void;
   updateRestyleSettings: (settings: Partial<RestyleSettings>) => void;
   updateNeonContourSettings: (settings: Partial<NeonContourSettings>) => void;
-  applyRestylePreset: (preset: RestyleSettings['preset']) => void;
   addGeneratedAsset: (asset: GeneratedAsset) => void;
   selectResult: (id: string | null) => void;
   setUploading: (v: boolean) => void;
@@ -142,19 +132,6 @@ export const useArtReviveStore = create<ArtReviveState>((set, get) => ({
       project: {
         ...s.project,
         neonContourSettings: { ...s.project.neonContourSettings, ...settings },
-        updatedAt: new Date().toISOString(),
-      },
-    })),
-
-  applyRestylePreset: (preset) =>
-    set((s) => ({
-      project: {
-        ...s.project,
-        restyleSettings: {
-          ...s.project.restyleSettings,
-          preset,
-          prompt: RESTYLE_PRESET_PROMPTS[preset],
-        },
         updatedAt: new Date().toISOString(),
       },
     })),

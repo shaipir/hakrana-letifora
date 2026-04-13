@@ -66,27 +66,24 @@ export interface ProjectState {
 
 export type ArtReviveMode = 'restyle' | 'neon-contour';
 
-export type RestylePreset =
-  | 'neon-projection'
-  | 'dark-futuristic'
-  | 'electric-energy'
-  | 'liquid-light'
-  | 'minimal-glow'
-  | 'glowing-sculpture';
+export type StyleWorld =
+  | 'forest' | 'sea' | 'fire' | 'spirit' | 'cartoon'
+  | 'ice' | 'crystal' | 'shadow' | 'floral' | 'machine';
+
+export interface RestyleSettings {
+  styleWorld: StyleWorld | null;
+  customStylePrompt: string;
+  preserveSubject: number;              // 0–1
+  transformStrength: number;            // 0–1
+  materialTransformationStrength: number; // 0–1
+  environmentTransformationStrength: number; // 0–1
+  realismVsStylization: number;         // 0–1 (0=realism, 1=full stylization)
+  backgroundIntegration: number;        // 0–1
+  atmosphereStrength: number;           // 0–1
+}
 
 export type NeonAnimationMode = 'flow' | 'pulse' | 'electric';
 export type FlowDirection = 'left-right' | 'right-left' | 'top-bottom' | 'bottom-top' | 'radial';
-
-export interface RestyleSettings {
-  prompt: string;
-  preset: RestylePreset;
-  preserveStructure: number;    // 0–1
-  stylizationStrength: number;  // 0–1
-  backgroundDarkness: number;   // 0–1
-  glowAmount: number;           // 0–1
-  subjectClarity: number;       // 0–1
-  detailRetention: number;      // 0–1
-}
 
 export interface NeonContourSettings {
   edgeSensitivity: number;        // 0–1

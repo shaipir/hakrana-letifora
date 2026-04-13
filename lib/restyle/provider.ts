@@ -101,29 +101,11 @@ const mockProvider: RestyleProvider = {
   name: 'mock',
 
   async generate(req: RestyleRequest): Promise<RestyleResponse> {
-    // Return the source image with a neon color overlay tint applied in-canvas
-    // This is a pure JS transformation — no external API needed.
+    // Return the source image as-is (no-op mock)
     await new Promise((r) => setTimeout(r, 800)); // simulate latency
-
-    const { imageBase64, mimeType, settings } = req;
-
-    // Parse neon color from preset
-    const neonColors: Record<string, [number, number, number]> = {
-      'neon-projection': [0, 229, 255],
-      'dark-futuristic': [100, 80, 255],
-      'electric-energy': [255, 200, 0],
-      'liquid-light': [0, 255, 160],
-      'minimal-glow': [200, 200, 255],
-      'glowing-sculpture': [255, 140, 0],
-    };
-    const [nr, ng, nb] = neonColors[settings.preset] ?? [0, 229, 255];
-
-    // Build tinted image via Canvas API
-    // This runs server-side via node-canvas or returns unchanged on edge
-    // For MVP: just return the source image as-is with a metadata note
     return {
-      imageBase64: imageBase64 ?? '',
-      mimeType: mimeType,
+      imageBase64: req.imageBase64 ?? '',
+      mimeType: req.mimeType,
     };
   },
 };
@@ -151,29 +133,17 @@ export function getRestyleProvider(): RestyleProvider {
 // ─── Prompt Builder ──────────────────────────────────────────────────────────
 
 function buildPrompt(settings: RestyleSettings, imageDescription?: string): string {
-  const presetBase = getPresetBasePrompt(settings.preset);
-  const userPrompt = settings.prompt.trim();
+  const world = settings.styleWorld ?? 'forest';
+  const worldBase = `Transform this image into a ${world} world aesthetic.`;
+  const userPrompt = settings.customStylePrompt.trim();
   const subject = imageDescription ? `Subject: ${imageDescription}.` : '';
 
   return [
-    presetBase,
+    worldBase,
     subject,
     userPrompt ? `Additional style direction: ${userPrompt}.` : '',
-    'Output should be projection-ready with high contrast against dark backgrounds.',
     'Maintain the original subject composition and pose faithfully.',
   ]
     .filter(Boolean)
     .join(' ');
-}
-
-function getPresetBasePrompt(preset: RestyleSettings['preset']): string {
-  const map: Record<RestyleSettings['preset'], string> = {
-    'neon-projection': 'Transform this image into neon projection art. Dark background, glowing cyan and magenta contour lines, high contrast neon aesthetic suitable for projection mapping.',
-    'dark-futuristic': 'Restyle as dark futuristic digital art. Deep black background, electric blue and violet tones, geometric light streaks, minimal but precise glow.',
-    'electric-energy': 'Apply electric energy burst treatment. Crackling lightning-like light, high contrast against pure black, yellow-white energy flows tracing the subject.',
-    'liquid-light': 'Transform into liquid light art. Smooth flowing luminous trails following the subject contours, deep dark background, fluid neon curves.',
-    'minimal-glow': 'Create minimal glowing outline artwork. Clean edge lines only, subtle ambient glow, very dark background, single-color neon treatment.',
-    'glowing-sculpture': 'Render as a glowing sculptural form. Warm orange and gold neon hues, three-dimensional depth impression, projection-mapped aesthetic.',
-  };
-  return map[preset];
 }
