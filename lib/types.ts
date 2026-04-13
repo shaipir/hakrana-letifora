@@ -68,7 +68,20 @@ export type ArtReviveMode = 'restyle' | 'neon-contour';
 
 export type StyleWorld =
   | 'forest' | 'sea' | 'fire' | 'spirit' | 'cartoon'
-  | 'ice' | 'crystal' | 'shadow' | 'floral' | 'machine';
+  | 'ice' | 'crystal' | 'shadow' | 'floral' | 'machine'
+  | 'bioluminescent' | 'sacred-geometry' | 'kaleidoscopic' | 'deep-dream' | 'visionary';
+
+export interface StyleWorldPreset {
+  id: StyleWorld;
+  label: string;
+  emoji: string;
+  tagline: string;
+  description: string;
+  visualKeywords: string[];
+  materialKeywords: string[];
+  atmosphereKeywords: string[];
+  colorKeywords: string[];
+}
 
 export interface RestyleSettings {
   styleWorld: StyleWorld | null;

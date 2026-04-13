@@ -148,6 +148,61 @@ const W_CONFIGS: Record<StyleWorld, WorldConfig> = {
     atmosphereColor: { r: 0, g: 60, b: 20 }, atmosphereStrength: 0.2,
     edgeStrength: 1.0, contrastPower: 2.0, saturation: 0.4,
   },
+  'bioluminescent': {
+    darkColor:   { r: 0,   g: 0,   b: 20  },
+    midColor:    { r: 0,   g: 80,  b: 160 },
+    brightColor: { r: 0,   g: 255, b: 200 },
+    accentColor: { r: 180, g: 255, b: 255 },
+    noiseScale1: 0.008, noiseScale2: 0.04, noiseMix: 0.7,
+    glowColor: { r: 0, g: 220, b: 255 }, glowRadius: 28, glowStrength: 0.6,
+    vignetteColor: { r: 0, g: 0, b: 0 }, vignetteStrength: 0.8,
+    atmosphereColor: { r: 0, g: 80, b: 120 }, atmosphereStrength: 0.3,
+    edgeStrength: 1.0, contrastPower: 1.6, saturation: 2.0,
+  },
+  'sacred-geometry': {
+    darkColor:   { r: 0,   g: 0,   b: 0   },
+    midColor:    { r: 0,   g: 120, b: 160 },
+    brightColor: { r: 0,   g: 240, b: 255 },
+    accentColor: { r: 255, g: 100, b: 255 },
+    noiseScale1: 0.03, noiseScale2: 0.09, noiseMix: 0.2,
+    glowColor: { r: 0, g: 200, b: 255 }, glowRadius: 16, glowStrength: 0.45,
+    vignetteColor: { r: 0, g: 0, b: 0 }, vignetteStrength: 0.75,
+    atmosphereColor: { r: 0, g: 60, b: 100 }, atmosphereStrength: 0.2,
+    edgeStrength: 1.0, contrastPower: 2.2, saturation: 1.8,
+  },
+  'kaleidoscopic': {
+    darkColor:   { r: 20,  g: 0,   b: 0   },
+    midColor:    { r: 180, g: 60,  b: 0   },
+    brightColor: { r: 255, g: 200, b: 50  },
+    accentColor: { r: 255, g: 255, b: 180 },
+    noiseScale1: 0.02, noiseScale2: 0.08, noiseMix: 0.5,
+    glowColor: { r: 255, g: 160, b: 0 }, glowRadius: 14, glowStrength: 0.35,
+    vignetteColor: { r: 10, g: 0, b: 20 }, vignetteStrength: 0.65,
+    atmosphereColor: { r: 120, g: 40, b: 0 }, atmosphereStrength: 0.25,
+    edgeStrength: 0.9, contrastPower: 1.8, saturation: 2.5,
+  },
+  'deep-dream': {
+    darkColor:   { r: 5,   g: 0,   b: 15  },
+    midColor:    { r: 80,  g: 20,  b: 120 },
+    brightColor: { r: 220, g: 100, b: 255 },
+    accentColor: { r: 255, g: 220, b: 100 },
+    noiseScale1: 0.025, noiseScale2: 0.1, noiseMix: 0.75,
+    glowColor: { r: 200, g: 80, b: 255 }, glowRadius: 18, glowStrength: 0.4,
+    vignetteColor: { r: 0, g: 0, b: 20 }, vignetteStrength: 0.6,
+    atmosphereColor: { r: 80, g: 20, b: 120 }, atmosphereStrength: 0.35,
+    edgeStrength: 0.85, contrastPower: 1.5, saturation: 2.2,
+  },
+  'visionary': {
+    darkColor:   { r: 0,   g: 5,   b: 30  },
+    midColor:    { r: 40,  g: 40,  b: 180 },
+    brightColor: { r: 200, g: 180, b: 80  },
+    accentColor: { r: 255, g: 230, b: 120 },
+    noiseScale1: 0.01, noiseScale2: 0.05, noiseMix: 0.45,
+    glowColor: { r: 200, g: 160, b: 80 }, glowRadius: 22, glowStrength: 0.45,
+    vignetteColor: { r: 0, g: 0, b: 30 }, vignetteStrength: 0.65,
+    atmosphereColor: { r: 40, g: 40, b: 140 }, atmosphereStrength: 0.3,
+    edgeStrength: 0.9, contrastPower: 1.4, saturation: 1.7,
+  },
 };
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -282,6 +337,34 @@ function worldTransform(img: HTMLImageElement, settings: RestyleSettings): strin
   }
 
   outCv.ctx.putImageData(outData, 0, 0);
+
+  // ── Kaleidoscopic: 4-fold mirror symmetry ──────────────────────────────
+  if (settings.styleWorld === 'kaleidoscopic') {
+    const mirrorCv = mc(W, H);
+    // top-left quadrant → mirror to all 4 quadrants
+    const hw = Math.floor(W/2), hh = Math.floor(H/2);
+    // top-left
+    mirrorCv.ctx.drawImage(outCv.canvas, 0, 0, hw, hh, 0, 0, hw, hh);
+    // top-right (flip horizontal)
+    mirrorCv.ctx.save();
+    mirrorCv.ctx.translate(W, 0); mirrorCv.ctx.scale(-1, 1);
+    mirrorCv.ctx.drawImage(outCv.canvas, 0, 0, hw, hh, 0, 0, hw, hh);
+    mirrorCv.ctx.restore();
+    // bottom-left (flip vertical)
+    mirrorCv.ctx.save();
+    mirrorCv.ctx.translate(0, H); mirrorCv.ctx.scale(1, -1);
+    mirrorCv.ctx.drawImage(outCv.canvas, 0, 0, hw, hh, 0, 0, hw, hh);
+    mirrorCv.ctx.restore();
+    // bottom-right (flip both)
+    mirrorCv.ctx.save();
+    mirrorCv.ctx.translate(W, H); mirrorCv.ctx.scale(-1, -1);
+    mirrorCv.ctx.drawImage(outCv.canvas, 0, 0, hw, hh, 0, 0, hw, hh);
+    mirrorCv.ctx.restore();
+    // blend mirror back with original transform
+    outCv.ctx.globalAlpha = 0.7;
+    outCv.ctx.drawImage(mirrorCv.canvas, 0, 0);
+    outCv.ctx.globalAlpha = 1;
+  }
 
   // ── Post-processing passes ───────────────────────────────────────────────
 

@@ -2,19 +2,15 @@
 
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import { StyleWorld } from '@/lib/types';
+import { STYLE_WORLD_PRESETS } from '@/lib/restyle/presets';
 
-const WORLDS: { id: StyleWorld; label: string; emoji: string; desc: string }[] = [
-  { id: 'forest',  label: 'Forest',  emoji: '🌿', desc: 'bark, moss, roots, mist' },
-  { id: 'sea',     label: 'Sea',     emoji: '🌊', desc: 'coral, water, deep glow' },
-  { id: 'fire',    label: 'Fire',    emoji: '🔥', desc: 'flame, ember, molten heat' },
-  { id: 'spirit',  label: 'Spirit',  emoji: '👻', desc: 'ethereal, ghostly, cold glow' },
-  { id: 'cartoon', label: 'Cartoon', emoji: '🎨', desc: 'bold lines, vivid stylization' },
-  { id: 'ice',     label: 'Ice',     emoji: '❄️', desc: 'frost, crystal, pale light' },
-  { id: 'crystal', label: 'Crystal', emoji: '💎', desc: 'prismatic, rainbow refraction' },
-  { id: 'shadow',  label: 'Shadow',  emoji: '🌑', desc: 'dark, purple, high contrast' },
-  { id: 'floral',  label: 'Floral',  emoji: '🌸', desc: 'bloom, petal, dreamy soft' },
-  { id: 'machine', label: 'Machine', emoji: '⚙️', desc: 'green terminal, metal, grid' },
-];
+// Split into visionary (top) and world (bottom) groups
+const VISIONARY_PRESETS = STYLE_WORLD_PRESETS.filter((p) =>
+  ['bioluminescent', 'sacred-geometry', 'kaleidoscopic', 'deep-dream', 'visionary'].includes(p.id)
+);
+const WORLD_PRESETS = STYLE_WORLD_PRESETS.filter((p) =>
+  ['forest', 'sea', 'fire', 'spirit', 'cartoon', 'ice', 'crystal', 'shadow', 'floral', 'machine'].includes(p.id)
+);
 
 const SLIDERS = [
   { key: 'transformStrength',     label: 'Transform Strength' },
@@ -32,64 +28,110 @@ export default function RestylePanel() {
   const s = project.restyleSettings;
 
   return (
-    <aside className="w-64 shrink-0 bg-ar-panel border-r border-ar-border flex flex-col overflow-y-auto">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-ar-border">
-        <h2 className="text-xs font-semibold tracking-widest uppercase text-ar-accent">WORLD REBUILD</h2>
-        <p className="text-xs text-ar-text-muted mt-0.5">Structural re-creation into a new world</p>
+    <div className="flex flex-col gap-5 p-4">
+      {/* ── Header ──────────────────────────────────────────────────── */}
+      <div>
+        <p className="text-xs font-bold text-ar-text uppercase tracking-widest">World Rebuild</p>
+        <p className="text-[10px] text-ar-text-dim mt-0.5">Structural re-creation into a new world</p>
       </div>
 
-      <div className="flex flex-col gap-5 p-4">
-        <div>
-          <p className="text-xs font-semibold text-ar-text-muted uppercase tracking-widest mb-3">World</p>
-          <div className="grid grid-cols-2 gap-1.5">
-            {WORLDS.map((w) => (
-              <button
-                key={w.id}
-                onClick={() => updateRestyleSettings({ styleWorld: w.id })}
-                className={`flex flex-col items-start px-2.5 py-2 rounded-lg border text-left transition-all ${
-                  s.styleWorld === w.id
-                    ? 'border-ar-accent bg-ar-accent/10 text-ar-text'
-                    : 'border-ar-border bg-ar-surface text-ar-text-muted hover:border-ar-accent/40 hover:text-ar-text'
-                }`}
-              >
-                <span className="text-base leading-none mb-0.5">{w.emoji}</span>
-                <span className="text-xs font-medium">{w.label}</span>
-                <span className="text-[10px] text-ar-text-dim leading-tight mt-0.5">{w.desc}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-xs font-semibold text-ar-text-muted uppercase tracking-widest mb-2">Custom Style</p>
-          <textarea
-            value={s.customStylePrompt}
-            onChange={(e) => updateRestyleSettings({ customStylePrompt: e.target.value })}
-            placeholder="e.g. transform the subject into a living forest spirit made of bark, roots, and glowing moss..."
-            rows={3}
-            className="w-full bg-ar-surface border border-ar-border rounded-lg px-3 py-2 text-xs text-ar-text placeholder:text-ar-text-dim resize-none focus:outline-none focus:border-ar-accent/60"
-          />
-        </div>
-
-        <div className="space-y-3">
-          <p className="text-xs font-semibold text-ar-text-muted uppercase tracking-widest">Parameters</p>
-          {SLIDERS.map(({ key, label }) => (
-            <div key={key}>
-              <div className="flex justify-between mb-1">
-                <span className="text-xs text-ar-text-muted">{label}</span>
-                <span className="text-xs text-ar-text-dim">{Math.round((s[key] as number) * 100)}%</span>
-              </div>
-              <input
-                type="range" min={0} max={1} step={0.01}
-                value={s[key] as number}
-                onChange={(e) => updateRestyleSettings({ [key]: parseFloat(e.target.value) })}
-                className="w-full"
-              />
-            </div>
+      {/* ── Visionary presets ────────────────────────────────────────── */}
+      <div>
+        <p className="text-[10px] font-semibold text-ar-accent uppercase tracking-widest mb-2">✦ Visionary</p>
+        <div className="flex flex-col gap-1.5">
+          {VISIONARY_PRESETS.map((p) => (
+            <PresetCard key={p.id} preset={p} active={s.styleWorld === p.id}
+              onSelect={() => updateRestyleSettings({ styleWorld: p.id as StyleWorld })} />
           ))}
         </div>
       </div>
-    </aside>
+
+      {/* ── World presets ─────────────────────────────────────────────── */}
+      <div>
+        <p className="text-[10px] font-semibold text-ar-text-muted uppercase tracking-widest mb-2">Worlds</p>
+        <div className="grid grid-cols-2 gap-1">
+          {WORLD_PRESETS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => updateRestyleSettings({ styleWorld: p.id as StyleWorld })}
+              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md border text-left transition-all ${
+                s.styleWorld === p.id
+                  ? 'border-ar-accent/60 bg-ar-accent/10 text-ar-text'
+                  : 'border-ar-border bg-ar-surface text-ar-text-muted hover:border-ar-accent/30 hover:text-ar-text'
+              }`}
+            >
+              <span className="text-sm">{p.emoji}</span>
+              <span className="text-xs font-medium">{p.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Custom prompt ────────────────────────────────────────────── */}
+      <div>
+        <p className="text-[10px] font-semibold text-ar-text-muted uppercase tracking-widest mb-1.5">Custom World Prompt</p>
+        <textarea
+          value={s.customStylePrompt}
+          onChange={(e) => updateRestyleSettings({ customStylePrompt: e.target.value })}
+          placeholder="e.g. transform the figure into a butterfly-like forest spirit made of bark, roots, glowing moss, and floating leaves..."
+          rows={3}
+          className="w-full bg-ar-surface border border-ar-border rounded-lg px-3 py-2 text-xs text-ar-text placeholder:text-ar-text-dim resize-none focus:outline-none focus:border-ar-accent/60"
+        />
+      </div>
+
+      {/* ── Sliders ──────────────────────────────────────────────────── */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-semibold text-ar-text-muted uppercase tracking-widest">Parameters</p>
+        {SLIDERS.map(({ key, label }) => (
+          <div key={key}>
+            <div className="flex justify-between mb-1">
+              <span className="text-xs text-ar-text-muted">{label}</span>
+              <span className="text-xs text-ar-text-dim">{Math.round((s[key] as number) * 100)}%</span>
+            </div>
+            <input
+              type="range" min={0} max={1} step={0.01}
+              value={s[key] as number}
+              onChange={(e) => updateRestyleSettings({ [key]: parseFloat(e.target.value) })}
+              className="w-full"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Preset Card (visionary row) ───────────────────────────────────────────────
+function PresetCard({
+  preset,
+  active,
+  onSelect,
+}: {
+  preset: typeof STYLE_WORLD_PRESETS[0];
+  active: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      onClick={onSelect}
+      className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-left transition-all ${
+        active
+          ? 'border-ar-accent bg-ar-accent/10'
+          : 'border-ar-border bg-ar-surface hover:border-ar-accent/40'
+      }`}
+    >
+      <span className="text-xl leading-none mt-0.5">{preset.emoji}</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className={`text-xs font-semibold ${active ? 'text-ar-accent' : 'text-ar-text'}`}>{preset.label}</span>
+        </div>
+        <p className="text-[10px] text-ar-text-dim mt-0.5 leading-tight">{preset.tagline}</p>
+        <div className="flex flex-wrap gap-1 mt-1.5">
+          {preset.colorKeywords.slice(0, 3).map((kw) => (
+            <span key={kw} className="px-1.5 py-0.5 rounded text-[9px] bg-ar-bg border border-ar-border/60 text-ar-text-dim">{kw}</span>
+          ))}
+        </div>
+      </div>
+    </button>
   );
 }
