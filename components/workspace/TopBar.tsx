@@ -3,7 +3,8 @@
 import { useRef, useState, useEffect } from 'react';
 import { Upload, Zap, Download, RotateCcw, Layers, Settings, X, Eye, EyeOff } from 'lucide-react';
 import { useArtReviveStore } from '@/lib/artrevive-store';
-import { UploadedAsset } from '@/lib/types';
+import { UploadedAsset, GeneratedAsset } from '@/lib/types';
+import { canvasRestyle } from '@/lib/restyle/canvas-transform';
 
 const GEMINI_KEY_STORAGE = 'artrevive_gemini_key';
 
@@ -104,41 +105,40 @@ export default function TopBar() {
   // ── Generate ────────────────────────────────────────────────────────────
   async function handleGenerate() {
     if (!project.uploadedAsset || isGenerating) return;
-
-    if (activeMode === 'restyle' && !getStoredKey()) {
-      setShowSettings(true);
-      setGenerateError('Add your Gemini API key in Settings first.');
-      return;
-    }
-
     setGenerating(true);
     setGenerateError(null);
 
     try {
-      const endpoint = activeMode === 'restyle' ? '/api/restyle' : '/api/neon-contour';
-      const body =
-        activeMode === 'restyle'
-          ? {
-              imageUrl: project.uploadedAsset.url,
-              mimeType: project.uploadedAsset.mimeType,
-              settings: project.restyleSettings,
-              sourceAssetId: project.uploadedAsset.id,
-              apiKey: getStoredKey(),
-            }
-          : {
-              imageUrl: project.uploadedAsset.url,
-              settings: project.neonContourSettings,
-              sourceAssetId: project.uploadedAsset.id,
-            };
-
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Generation failed');
-      addGeneratedAsset(json.asset);
+      if (activeMode === 'restyle') {
+        // Client-side canvas restyle — no API needed
+        const resultUrl = await canvasRestyle(
+          project.uploadedAsset.url,
+          project.restyleSettings
+        );
+        const asset: GeneratedAsset = {
+          id: crypto.randomUUID(),
+          url: resultUrl,
+          mode: 'restyle',
+          settings: project.restyleSettings,
+          sourceAssetId: project.uploadedAsset.id,
+          createdAt: new Date().toISOString(),
+        };
+        addGeneratedAsset(asset);
+      } else {
+        // Neon contour — server-side
+        const res = await fetch('/api/neon-contour', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageUrl: project.uploadedAsset.url,
+            settings: project.neonContourSettings,
+            sourceAssetId: project.uploadedAsset.id,
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error ?? 'Generation failed');
+        addGeneratedAsset(json.asset);
+      }
     } catch (err: any) {
       setGenerateError(err?.message ?? 'Generation failed');
     } finally {
