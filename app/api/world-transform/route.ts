@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
         ];
 
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
             .find((p: any) => p.inline_data?.mime_type?.startsWith('image/'));
           if (imgPart) {
             providerUsed = 'google';
-            modelUsed = 'gemini-2.0-flash-preview-image-generation';
+            modelUsed = 'gemini-2.5-flash-preview-04-17';
             console.log('WORLD_TRANSFORM_PROVIDER', providerUsed);
             console.log('WORLD_TRANSFORM_MODEL', modelUsed);
             console.log('FALLBACK_USED', false);

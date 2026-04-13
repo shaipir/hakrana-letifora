@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Try Gemini 2.0 Flash (image generation)
-    const model = 'gemini-2.0-flash-preview-image-generation';
+    const model = 'gemini-2.5-flash-preview-04-17';
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const res = await fetch(url, {
