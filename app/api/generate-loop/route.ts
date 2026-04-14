@@ -29,7 +29,7 @@ async function generateFrame(
         body: JSON.stringify({
           contents: [{
             parts: [
-              { inline_data: { mime_type: mimeType, data: imageBase64 } },
+              { inlineData: { mimeType: mimeType, data: imageBase64 } },
               { text: prompt },
             ],
           }],
@@ -40,9 +40,9 @@ async function generateFrame(
     if (res.ok) {
       const json = await res.json();
       const imgPart = (json?.candidates?.[0]?.content?.parts ?? [])
-        .find((p: any) => p.inline_data?.mime_type?.startsWith('image/'));
+        .find((p: any) => p.inlineData?.mimeType?.startsWith('image/'));
       if (imgPart) {
-        return { url: `data:${imgPart.inline_data.mime_type};base64,${imgPart.inline_data.data}` };
+        return { url: `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}` };
       }
       return { error: 'no image in response' };
     }

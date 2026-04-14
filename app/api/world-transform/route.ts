@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
               contents: [{
                 parts: [
-                  { inline_data: { mime_type: mimeType, data: imageBase64 } },
+                  { inlineData: { mimeType: mimeType, data: imageBase64 } },
                   { text: transformPrompt },
                 ],
               }],
@@ -55,13 +55,13 @@ export async function POST(req: NextRequest) {
         if (res.ok) {
           const json = await res.json();
           const imgPart = (json?.candidates?.[0]?.content?.parts ?? [])
-            .find((p: any) => p.inline_data?.mime_type?.startsWith('image/'));
+            .find((p: any) => p.inlineData?.mimeType?.startsWith('image/'));
           if (imgPart) {
             console.log('WORLD_TRANSFORM_PROVIDER', 'google');
             console.log('WORLD_TRANSFORM_MODEL', GEMINI_IMAGE_MODEL);
             console.log('FALLBACK_USED', false);
             return NextResponse.json({
-              url: `data:${imgPart.inline_data.mime_type};base64,${imgPart.inline_data.data}`,
+              url: `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`,
               motionHint,
               provider: 'google',
               model: GEMINI_IMAGE_MODEL,
