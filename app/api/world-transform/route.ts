@@ -67,11 +67,18 @@ export async function POST(req: NextRequest) {
               model: GEMINI_IMAGE_MODEL,
             });
           }
-          errors.push(`gemini: no image in response`);
+          const fullResp = JSON.stringify(json).slice(0, 300);
+          console.error('GEMINI_NO_IMAGE', fullResp);
+          errors.push(`gemini: no image in response — ${fullResp}`);
         } else {
-          errors.push(`gemini ${res.status}: ${(await res.text()).slice(0, 200)}`);
+          const errText = await res.text();
+          console.error('GEMINI_ERROR', res.status, errText.slice(0, 300));
+          errors.push(`gemini ${res.status}: ${errText.slice(0, 300)}`);
         }
-      } catch (e: any) { errors.push(`gemini: ${e?.message}`); }
+      } catch (e: any) {
+        console.error('GEMINI_EXCEPTION', e?.message);
+        errors.push(`gemini: ${e?.message}`);
+      }
     } else {
       errors.push('no API key');
     }

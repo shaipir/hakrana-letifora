@@ -178,7 +178,7 @@ export default function TopBar() {
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? 'World Transform failed');
-        if (json.fallback) setGenerateError(`Note: Using ${json.model} fallback (Gemini unavailable)`);
+        if (json.fallback) setGenerateError(`⚠ Gemini failed — using Flux fallback. Reason: ${json.fallbackReason}`);
         const resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
         const asset: GeneratedAsset = {
           id: crypto.randomUUID(), url: resultUrl, mode: 'restyle',
@@ -195,7 +195,7 @@ export default function TopBar() {
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? 'Glow Sculpture failed');
-        if (json.fallback) setGenerateError(`Note: Using ${json.model} fallback (Gemini unavailable)`);
+        if (json.fallback) setGenerateError(`⚠ Gemini failed — using Flux fallback. Reason: ${json.fallbackReason}`);
         const resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
         const asset: GeneratedAsset = {
           id: crypto.randomUUID(), url: resultUrl, mode: 'glow-sculpture',
@@ -212,7 +212,7 @@ export default function TopBar() {
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? 'House Projection failed');
-        if (json.fallback) setGenerateError(`Note: Using ${json.model} fallback (Gemini unavailable)`);
+        if (json.fallback) setGenerateError(`⚠ Gemini failed — using Flux fallback. Reason: ${json.fallbackReason}`);
         const resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
         const asset: GeneratedAsset = {
           id: crypto.randomUUID(), url: resultUrl, mode: 'house-projection',
