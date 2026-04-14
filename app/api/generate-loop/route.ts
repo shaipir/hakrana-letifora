@@ -11,7 +11,7 @@ import { buildFrameMotionPrompt } from '@/lib/loop/frame-prompt-builder';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const GEMINI_IMAGE_MODEL = 'gemini-2.0-flash-exp-image-generation';
+const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';
 const BATCH_SIZE = 5;
 
 async function generateFrame(

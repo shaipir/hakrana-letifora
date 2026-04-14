@@ -5,7 +5,7 @@ import { buildHouseProjectionPrompt } from '@/lib/house-projection/prompt-builde
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const GEMINI_IMAGE_MODEL = 'gemini-2.0-flash-exp-image-generation';
+const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';
 
 export async function POST(req: NextRequest) {
   try {
