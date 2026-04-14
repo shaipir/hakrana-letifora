@@ -5,6 +5,8 @@ import { buildHouseProjectionPrompt } from '@/lib/house-projection/prompt-builde
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
+const GEMINI_IMAGE_MODEL = 'gemini-2.0-flash-exp-image-generation';
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -22,22 +24,17 @@ export async function POST(req: NextRequest) {
     const apiKey = bodyKey || process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     const { transformPrompt, debugInfo } = buildHouseProjectionPrompt(settings);
 
-    // ── Debug logging ──────────────────────────────────────────────────────
     console.log('HOUSE_PROJECTION_WORLD', debugInfo.worldPreset);
-    console.log('HOUSE_PROJECTION_GEO_PRESERVE', debugInfo.geometryPreservation);
     console.log('HOUSE_PROJECTION_HAS_API_KEY', !!apiKey);
-    console.log('HOUSE_PROJECTION_PROMPT', transformPrompt.slice(0, 400));
+    console.log('HOUSE_PROJECTION_PROMPT', transformPrompt.slice(0, 300));
 
     const errors: string[] = [];
-    let providerUsed = '';
-    let modelUsed = '';
-    let fallbackUsed = false;
 
-    // ── Attempt 1: Gemini flash-preview image-to-image ────────────────────
+    // ── Attempt 1: Gemini image-to-image ─────────────────────────────────
     if (apiKey) {
       try {
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -55,57 +52,45 @@ export async function POST(req: NextRequest) {
         if (res.ok) {
           const json = await res.json();
           const imgPart = (json?.candidates?.[0]?.content?.parts ?? [])
-            .find((p: unknown) => (p as { inline_data?: { mime_type?: string } })?.inline_data?.mime_type?.startsWith('image/'));
+            .find((p: any) => p.inline_data?.mime_type?.startsWith('image/'));
           if (imgPart) {
-            providerUsed = 'google';
-            modelUsed = 'gemini-2.5-flash-preview-04-17';
-            console.log('HOUSE_PROJECTION_PROVIDER', providerUsed);
-            console.log('HOUSE_PROJECTION_MODEL', modelUsed);
+            console.log('HOUSE_PROJECTION_PROVIDER', 'google');
+            console.log('HOUSE_PROJECTION_MODEL', GEMINI_IMAGE_MODEL);
             console.log('HOUSE_PROJECTION_FALLBACK', false);
             return NextResponse.json({
-              url: `data:${(imgPart as { inline_data: { mime_type: string; data: string } }).inline_data.mime_type};base64,${(imgPart as { inline_data: { mime_type: string; data: string } }).inline_data.data}`,
-              provider: providerUsed,
-              model: modelUsed,
+              url: `data:${imgPart.inline_data.mime_type};base64,${imgPart.inline_data.data}`,
+              provider: 'google',
+              model: GEMINI_IMAGE_MODEL,
             });
           }
-          errors.push('flash-preview: no image in response');
+          errors.push('gemini: no image in response');
         } else {
-          errors.push(`flash-preview ${res.status}: ${(await res.text()).slice(0, 200)}`);
+          errors.push(`gemini ${res.status}: ${(await res.text()).slice(0, 200)}`);
         }
-      } catch (e: unknown) { errors.push(`flash-preview: ${(e as Error)?.message}`); }
+      } catch (e: any) { errors.push(`gemini: ${e?.message}`); }
+    } else {
+      errors.push('no API key');
     }
 
-    // ── Fallback: Pollinations FLUX ────────────────────────────────────────
-    fallbackUsed = true;
-    try {
-      const encoded = encodeURIComponent(transformPrompt.slice(0, 500));
-      const seed = Math.floor(Math.random() * 99999);
-      const url = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
-      const imgRes = await fetch(url, { signal: AbortSignal.timeout(55000) });
-      if (imgRes.ok) {
-        providerUsed = 'pollinations';
-        modelUsed = 'flux';
-        const ct = imgRes.headers.get('content-type') ?? 'image/jpeg';
-        const buf = Buffer.from(await imgRes.arrayBuffer());
-        console.log('HOUSE_PROJECTION_PROVIDER', providerUsed);
-        console.log('HOUSE_PROJECTION_MODEL', modelUsed);
-        console.log('HOUSE_PROJECTION_FALLBACK', true);
-        return NextResponse.json({
-          url: `data:${ct};base64,${buf.toString('base64')}`,
-          provider: providerUsed,
-          model: modelUsed,
-          fallback: true,
-          fallbackReason: errors.join('; ') || 'No Gemini API key',
-        });
-      }
-      errors.push(`pollinations ${imgRes.status}`);
-    } catch (e: unknown) { errors.push(`pollinations: ${(e as Error)?.message}`); }
+    // ── Fallback: Return Pollinations URL directly (browser fetches it) ────
+    const encoded = encodeURIComponent(transformPrompt.slice(0, 500));
+    const seed = Math.floor(Math.random() * 99999);
+    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
 
-    void fallbackUsed;
+    console.log('HOUSE_PROJECTION_PROVIDER', 'pollinations');
+    console.log('HOUSE_PROJECTION_MODEL', 'flux');
+    console.log('HOUSE_PROJECTION_FALLBACK', true);
 
-    return NextResponse.json({ error: errors.join(' | ') }, { status: 500 });
-  } catch (err: unknown) {
+    return NextResponse.json({
+      pollinationsUrl,
+      provider: 'pollinations',
+      model: 'flux',
+      fallback: true,
+      fallbackReason: errors.join('; '),
+    });
+
+  } catch (err: any) {
     console.error('[house-projection] unhandled:', err);
-    return NextResponse.json({ error: (err as Error)?.message ?? 'Transform failed' }, { status: 500 });
+    return NextResponse.json({ error: err?.message ?? 'Transform failed' }, { status: 500 });
   }
 }

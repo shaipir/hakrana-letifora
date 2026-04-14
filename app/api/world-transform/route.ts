@@ -5,6 +5,9 @@ import { buildWorldTransformPrompt } from '@/lib/restyle/prompt-builder';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
+// Gemini model that supports image generation output
+const GEMINI_IMAGE_MODEL = 'gemini-2.0-flash-exp-image-generation';
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -20,36 +23,30 @@ export async function POST(req: NextRequest) {
     }
 
     const apiKey = bodyKey || process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-    const { transformPrompt, motionHint, debugInfo } = buildWorldTransformPrompt(settings);
+    const { transformPrompt, motionHint } = buildWorldTransformPrompt(settings);
 
-    // ── Debug logging ──────────────────────────────────────────────────────
     console.log('WORLD_TRANSFORM_MODE', settings.mode);
     console.log('WORLD_TRANSFORM_WORLD', settings.worldPreset);
-    console.log('WORLD_TRANSFORM_VISUAL_LANG', settings.visualLanguage);
-    console.log('WORLD_TRANSFORM_PROMPT', transformPrompt.slice(0, 300));
-    console.log('WORLD_TRANSFORM_MOTION_HINT', motionHint);
     console.log('WORLD_TRANSFORM_HAS_API_KEY', !!apiKey);
+    console.log('WORLD_TRANSFORM_PROMPT', transformPrompt.slice(0, 300));
 
     const errors: string[] = [];
-    let providerUsed = '';
-    let modelUsed = '';
-    let fallbackUsed = false;
 
-    // ── Attempt 1: Gemini flash-preview image generation (image-to-image) ─
+    // ── Attempt 1: Gemini image generation (image-to-image) ───────────────
     if (apiKey) {
       try {
-        const parts: any[] = [
-          { inline_data: { mime_type: mimeType, data: imageBase64 } },
-          { text: transformPrompt },
-        ];
-
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [{ parts }],
+              contents: [{
+                parts: [
+                  { inline_data: { mime_type: mimeType, data: imageBase64 } },
+                  { text: transformPrompt },
+                ],
+              }],
               generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
             }),
           }
@@ -60,59 +57,44 @@ export async function POST(req: NextRequest) {
           const imgPart = (json?.candidates?.[0]?.content?.parts ?? [])
             .find((p: any) => p.inline_data?.mime_type?.startsWith('image/'));
           if (imgPart) {
-            providerUsed = 'google';
-            modelUsed = 'gemini-2.5-flash-preview-04-17';
-            console.log('WORLD_TRANSFORM_PROVIDER', providerUsed);
-            console.log('WORLD_TRANSFORM_MODEL', modelUsed);
+            console.log('WORLD_TRANSFORM_PROVIDER', 'google');
+            console.log('WORLD_TRANSFORM_MODEL', GEMINI_IMAGE_MODEL);
             console.log('FALLBACK_USED', false);
             return NextResponse.json({
               url: `data:${imgPart.inline_data.mime_type};base64,${imgPart.inline_data.data}`,
               motionHint,
-              provider: providerUsed,
-              model: modelUsed,
+              provider: 'google',
+              model: GEMINI_IMAGE_MODEL,
             });
           }
-          errors.push('flash-preview: no image in response');
+          errors.push(`gemini: no image in response`);
         } else {
-          errors.push(`flash-preview ${res.status}: ${(await res.text()).slice(0, 200)}`);
+          errors.push(`gemini ${res.status}: ${(await res.text()).slice(0, 200)}`);
         }
-      } catch (e: any) { errors.push(`flash-preview: ${e?.message}`); }
+      } catch (e: any) { errors.push(`gemini: ${e?.message}`); }
+    } else {
+      errors.push('no API key');
     }
 
-    // ── Attempt 2: Pollinations.ai FLUX (free, no key needed) ─────────────
-    fallbackUsed = true;
-    try {
-      const encodedPrompt = encodeURIComponent(transformPrompt.slice(0, 500));
-      const seed = Math.floor(Math.random() * 99999);
-      const pollUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
+    // ── Fallback: Pollinations URL returned directly to client ─────────────
+    // Client fetches the image directly — no server timeout issue
+    const encodedPrompt = encodeURIComponent(transformPrompt.slice(0, 500));
+    const seed = Math.floor(Math.random() * 99999);
+    const pollUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
 
-      const imgRes = await fetch(pollUrl, {
-        signal: AbortSignal.timeout(55000),
-      });
-
-      if (imgRes.ok) {
-        providerUsed = 'pollinations';
-        modelUsed = 'flux';
-        const ct = imgRes.headers.get('content-type') ?? 'image/jpeg';
-        const buf = Buffer.from(await imgRes.arrayBuffer());
-        console.log('WORLD_TRANSFORM_PROVIDER', providerUsed);
-        console.log('WORLD_TRANSFORM_MODEL', modelUsed);
-        console.log('FALLBACK_USED', true);
-        return NextResponse.json({
-          url: `data:${ct};base64,${buf.toString('base64')}`,
-          motionHint,
-          provider: providerUsed,
-          model: modelUsed,
-          fallback: true,
-          fallbackReason: errors.join('; ') || 'No Gemini API key',
-        });
-      }
-      errors.push(`pollinations ${imgRes.status}`);
-    } catch (e: any) { errors.push(`pollinations: ${e?.message}`); }
-
-    console.log('WORLD_TRANSFORM_PROVIDER', 'none');
+    console.log('WORLD_TRANSFORM_PROVIDER', 'pollinations');
+    console.log('WORLD_TRANSFORM_MODEL', 'flux');
     console.log('FALLBACK_USED', true);
-    return NextResponse.json({ error: errors.join(' | ') }, { status: 500 });
+
+    return NextResponse.json({
+      // Return the URL directly — browser loads it (no server fetch timeout)
+      pollinationsUrl: pollUrl,
+      motionHint,
+      provider: 'pollinations',
+      model: 'flux',
+      fallback: true,
+      fallbackReason: errors.join('; '),
+    });
 
   } catch (err: any) {
     console.error('[world-transform] unhandled:', err);
