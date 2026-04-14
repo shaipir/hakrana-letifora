@@ -135,8 +135,11 @@ export default function TopBar() {
             apiKey: storedKey || undefined,
           }),
         });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error ?? 'Loop generation failed');
+        const text = await res.text();
+        let json: any;
+        try { json = JSON.parse(text); }
+        catch { throw new Error(`Server error (${res.status}): ${text.slice(0, 200)}`); }
+        if (!res.ok) throw new Error(json?.error ?? `Loop failed (${res.status})`);
 
         const resolvedFrames = await Promise.all(
           (json.frames as string[]).map(async (f: string) => {
@@ -170,56 +173,46 @@ export default function TopBar() {
     try {
       const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1024);
 
-      if (activeMode === 'restyle') {
-        const res = await fetch('/api/world-transform', {
+      async function safePost(url: string, body: object) {
+        const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64, mimeType, settings: project.restyleSettings, apiKey: storedKey || undefined }),
+          body: JSON.stringify(body),
         });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error ?? 'World Transform failed');
-        if (json.fallback) setGenerateError(`⚠ Gemini failed — using Flux fallback. Reason: ${json.fallbackReason}`);
+        const text = await res.text();
+        let json: any;
+        try { json = JSON.parse(text); }
+        catch { throw new Error(`Server error (${res.status}): ${text.slice(0, 200)}`); }
+        if (!res.ok) throw new Error(json?.error ?? `Request failed (${res.status})`);
+        return json;
+      }
+
+      if (activeMode === 'restyle') {
+        const json = await safePost('/api/world-transform', {
+          imageBase64, mimeType, settings: project.restyleSettings, apiKey: storedKey || undefined,
+        });
+        if (json.fallback) setGenerateError(`⚠ Gemini fallback: ${json.fallbackReason}`);
         const resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
-        const asset: GeneratedAsset = {
-          id: crypto.randomUUID(), url: resultUrl, mode: 'restyle',
-          settings: project.restyleSettings, sourceAssetId: project.uploadedAsset.id,
-          createdAt: new Date().toISOString(),
-        };
-        addGeneratedAsset(asset);
+        addGeneratedAsset({ id: crypto.randomUUID(), url: resultUrl, mode: 'restyle',
+          settings: project.restyleSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
 
       } else if (activeMode === 'glow-sculpture') {
-        const res = await fetch('/api/glow-sculpture', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64, mimeType, settings: project.glowSculptureSettings, apiKey: storedKey || undefined }),
+        const json = await safePost('/api/glow-sculpture', {
+          imageBase64, mimeType, settings: project.glowSculptureSettings, apiKey: storedKey || undefined,
         });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error ?? 'Glow Sculpture failed');
-        if (json.fallback) setGenerateError(`⚠ Gemini failed — using Flux fallback. Reason: ${json.fallbackReason}`);
+        if (json.fallback) setGenerateError(`⚠ Gemini fallback: ${json.fallbackReason}`);
         const resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
-        const asset: GeneratedAsset = {
-          id: crypto.randomUUID(), url: resultUrl, mode: 'glow-sculpture',
-          settings: project.glowSculptureSettings, sourceAssetId: project.uploadedAsset.id,
-          createdAt: new Date().toISOString(),
-        };
-        addGeneratedAsset(asset);
+        addGeneratedAsset({ id: crypto.randomUUID(), url: resultUrl, mode: 'glow-sculpture',
+          settings: project.glowSculptureSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
 
       } else if (activeMode === 'house-projection') {
-        const res = await fetch('/api/house-projection', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64, mimeType, settings: project.houseProjectionSettings, apiKey: storedKey || undefined }),
+        const json = await safePost('/api/house-projection', {
+          imageBase64, mimeType, settings: project.houseProjectionSettings, apiKey: storedKey || undefined,
         });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error ?? 'House Projection failed');
-        if (json.fallback) setGenerateError(`⚠ Gemini failed — using Flux fallback. Reason: ${json.fallbackReason}`);
+        if (json.fallback) setGenerateError(`⚠ Gemini fallback: ${json.fallbackReason}`);
         const resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
-        const asset: GeneratedAsset = {
-          id: crypto.randomUUID(), url: resultUrl, mode: 'house-projection',
-          settings: project.houseProjectionSettings, sourceAssetId: project.uploadedAsset.id,
-          createdAt: new Date().toISOString(),
-        };
-        addGeneratedAsset(asset);
+        addGeneratedAsset({ id: crypto.randomUUID(), url: resultUrl, mode: 'house-projection',
+          settings: project.houseProjectionSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
       }
     } catch (err: any) {
       setGenerateError(err?.message ?? 'Generation failed');
