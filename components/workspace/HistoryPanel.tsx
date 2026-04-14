@@ -82,7 +82,7 @@ export default function HistoryPanel() {
                       : 'bg-ar-accent/20 text-ar-accent'
                   }`}
                 >
-                  {asset.mode === 'restyle' ? 'RS' : 'NC'}
+                  {asset.mode === 'restyle' ? 'RS' : asset.mode === 'glow-sculpture' ? 'GS' : 'HP'}
                 </span>
               </div>
 

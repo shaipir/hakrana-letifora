@@ -64,7 +64,7 @@ export interface ProjectState {
 
 // ─── ArtRevive Domain Types ────────────────────────────────────────────────
 
-export type ArtReviveMode = 'restyle' | 'neon-contour' | 'house-projection';
+export type ArtReviveMode = 'restyle' | 'glow-sculpture' | 'house-projection';
 
 export type HouseWorldPreset =
   | 'forest' | 'sea' | 'fire' | 'spirit' | 'cartoon'
@@ -73,15 +73,15 @@ export type HouseWorldPreset =
 export interface HouseProjectionSettings {
   worldPreset: HouseWorldPreset | null;
   customStylePrompt: string;
-  geometryPreservation: number;           // 0–1
-  facadePreservation: number;             // 0–1
-  windowAlignmentPreservation: number;    // 0–1
-  surfaceTransformationStrength: number;  // 0–1
-  projectionIntensity: number;            // 0–1
-  glowAmount: number;                     // 0–1
-  darknessContrast: number;               // 0–1
-  ornamentationLevel: number;             // 0–1
-  atmosphereStrength: number;             // 0–1
+  geometryPreservation: number;
+  facadePreservation: number;
+  windowAlignmentPreservation: number;
+  surfaceTransformationStrength: number;
+  projectionIntensity: number;
+  glowAmount: number;
+  darknessContrast: number;
+  ornamentationLevel: number;
+  atmosphereStrength: number;
 }
 
 export type StyleWorld =
@@ -115,36 +115,88 @@ export interface RestyleSettings {
   worldPreset: WorldPreset | null;
   visualLanguage: VisualLanguagePreset;
   customStylePrompt: string;
-  // Preservation
-  preserveStructure: number;        // 0–1
-  identityPreservation: number;     // 0–1
-  facePreservation: number;         // 0–1
-  posePreservation: number;         // 0–1
-  // Transformation
-  redesignMaterials: number;        // 0–1
-  redesignEnvironment: number;      // 0–1
-  fantasyStrength: number;          // 0–1
-  realismVsStylization: number;     // 0–1
-  atmosphereStrength: number;       // 0–1
-  // Reshape
-  reshapeStrength: number;          // 0–1
+  preserveStructure: number;
+  identityPreservation: number;
+  facePreservation: number;
+  posePreservation: number;
+  redesignMaterials: number;
+  redesignEnvironment: number;
+  fantasyStrength: number;
+  realismVsStylization: number;
+  atmosphereStrength: number;
+  reshapeStrength: number;
   customReshapePrompt: string;
-  transformStrength: number;        // 0–1 overall
+  transformStrength: number;
 }
 
+// Glow Sculpture (replaces old NeonContour)
+export type GlowContourStyle = 'neon-sign' | 'light-paint' | 'plasma' | 'laser' | 'molten' | 'ethereal';
+export type GlowColorMode = 'single' | 'dual-gradient' | 'multi-gradient';
+export type GlowColorPreset = 'cyber' | 'vapor' | 'solar' | 'toxic' | 'ice' | 'blood' | 'aurora' | 'mono' | 'phantom';
+export type GlowBackgroundType = 'pure-black' | 'deep-dark' | 'textured-dark';
+export type GlowBackgroundTexture = 'dark-concrete' | 'black-metal' | 'wet-asphalt' | 'dark-glass' | 'none';
+
+export interface GlowSculptureSettings {
+  contourStyle: GlowContourStyle;
+  lineThickness: number;        // 1–10
+  contourSmoothing: number;     // 0–1
+  detailReduction: number;      // 0–1
+  lineTaper: number;            // 0–1
+  glowIntensity: number;        // 0–1
+  glowRadius: number;           // 0–1
+  glowSoftness: number;         // 0–1
+  coreBrightness: number;       // 0–1
+  bloomLayers: number;          // 1–5
+  ambientLightScatter: number;  // 0–1
+  colorMode: GlowColorMode;
+  colorPreset: GlowColorPreset;
+  gradientFlowDirection: string;
+  backgroundType: GlowBackgroundType;
+  backgroundTexture: GlowBackgroundTexture;
+  customStylePrompt: string;
+}
+
+// Loop settings
+export type LoopMotionType = 'breathe' | 'trace' | 'pulse' | 'flicker' | 'reveal' | 'flow';
+
+export interface LoopSettings {
+  outputMode: 'still' | 'loop';
+  frameCount: number;           // default 10
+  motionIntensity: number;      // 0–1
+  motionType: LoopMotionType;
+  loopSoftness: number;         // 0–1
+  eyeBlink: boolean;
+  breathing: boolean;
+  environmentalMotion: boolean;
+  organicGrowth: boolean;
+}
+
+export interface GeneratedLoop {
+  id: string;
+  frames: string[];             // data URLs or blob URLs
+  gifUrl?: string;
+  webmUrl?: string;
+  frameCount: number;
+  mode: ArtReviveMode;
+  motionType: LoopMotionType;
+  sourceAssetId: string;
+  createdAt: string;
+}
+
+// Keep NeonContourSettings for backward compat (not actively used)
 export type NeonAnimationMode = 'flow' | 'pulse' | 'electric';
 export type FlowDirection = 'left-right' | 'right-left' | 'top-bottom' | 'bottom-top' | 'radial';
 
 export interface NeonContourSettings {
-  edgeSensitivity: number;        // 0–1
-  lineThickness: number;          // 1–10 px
-  lineDensity: number;            // 0–1
-  contourSimplification: number;  // 0–1
-  backgroundDarkness: number;     // 0–1
-  neonColor: string;              // hex
-  glowStrength: number;           // 0–1
+  edgeSensitivity: number;
+  lineThickness: number;
+  lineDensity: number;
+  contourSimplification: number;
+  backgroundDarkness: number;
+  neonColor: string;
+  glowStrength: number;
   animationMode: NeonAnimationMode;
-  speed: number;                  // 0–1
+  speed: number;
   flowDirection: FlowDirection;
 }
 
@@ -162,7 +214,7 @@ export interface GeneratedAsset {
   id: string;
   url: string;
   mode: ArtReviveMode;
-  settings: RestyleSettings | HouseProjectionSettings | NeonContourSettings;
+  settings: RestyleSettings | HouseProjectionSettings | GlowSculptureSettings;
   sourceAssetId: string;
   createdAt: string;
 }
@@ -174,8 +226,9 @@ export interface ArtworkProject {
   generatedAssets: GeneratedAsset[];
   activeMode: ArtReviveMode;
   restyleSettings: RestyleSettings;
-  neonContourSettings: NeonContourSettings;
+  glowSculptureSettings: GlowSculptureSettings;
   houseProjectionSettings: HouseProjectionSettings;
+  loopSettings: LoopSettings;
   createdAt: string;
   updatedAt: string;
 }
@@ -189,7 +242,7 @@ export interface GenerationResult {
 export interface ExportRequest {
   assetId: string;
   format: 'png' | 'jpg' | 'webp';
-  quality?: number; // 0–1 for jpg/webp
+  quality?: number;
 }
 
 export interface ExportResult {
@@ -198,8 +251,6 @@ export interface ExportResult {
   filename?: string;
   error?: string;
 }
-
-// ─── Art Direction Types ───────────────────────────────────────────────────
 
 export type ArtDirectionId =
   | 'fluid-dynamics' | 'fibonacci-spiral' | 'volcanic-glass' | 'neon-glitch'
@@ -212,37 +263,4 @@ export interface ArtDirectionPreset {
   tagline: string;
   prompt: string;
   canvasWorldFallback: string;
-}
-
-// ─── Future 2D-to-3D Pipeline (placeholders) ──────────────────────────────
-
-export interface ThreeDGenerationRequest {
-  sourceAssetId: string;
-  prompt?: string;
-  outputFormat: 'glb' | 'obj' | 'splat';
-}
-
-export interface ThreeDGenerationJob {
-  id: string;
-  status: 'queued' | 'processing' | 'completed' | 'failed';
-  sourceAssetId: string;
-  createdAt: string;
-  completedAt?: string;
-  error?: string;
-}
-
-export interface ThreeDAsset {
-  id: string;
-  jobId: string;
-  url: string;
-  format: 'glb' | 'obj' | 'splat';
-  createdAt: string;
-}
-
-export interface ThreeDPreviewState {
-  isLoading: boolean;
-  asset: ThreeDAsset | null;
-  rotationX: number;
-  rotationY: number;
-  zoom: number;
 }
