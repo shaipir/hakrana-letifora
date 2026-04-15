@@ -60,9 +60,11 @@ export default function HistoryPanel() {
               className={`group relative rounded-md overflow-hidden border cursor-pointer transition-all ${
                 selectedResultId === asset.id
                   ? asset.mode === 'restyle'
-                    ? 'border-ar-violet/60 ring-1 ring-ar-violet/30'
-                    : 'border-ar-accent/60 ring-1 ring-ar-accent/30'
-                  : 'border-ar-border hover:border-ar-text-dim'
+                    ? 'border-ar-violet/60 ring-1 ring-ar-violet/30 shadow-[0_0_16px_rgba(139,92,246,0.25)]'
+                    : asset.mode === 'glow-sculpture'
+                    ? 'border-ar-accent/60 ring-1 ring-ar-accent/30 shadow-[0_0_16px_rgba(0,229,255,0.25)]'
+                    : 'border-orange-500/60 ring-1 ring-orange-500/30 shadow-[0_0_16px_rgba(249,115,22,0.25)]'
+                  : 'border-ar-border hover:border-ar-border-subtle hover:shadow-[0_0_12px_rgba(0,229,255,0.1)]'
               }`}
             >
               {/* Thumbnail */}

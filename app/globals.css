@@ -7,8 +7,13 @@
 body {
   background: #050507;
   color: #e8e8f0;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans, 'Space Grotesk', system-ui, sans-serif);
   overflow: hidden;
+}
+
+:root {
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
 }
 
 /* ── Scrollbars ─────────────────────────────────────────────────────────── */
@@ -31,9 +36,10 @@ body {
 }
 
 /* ── Neon glow utilities ────────────────────────────────────────────────── */
-.glow-cyan  { box-shadow: 0 0 20px rgba(0,229,255,0.35); }
+.glow-cyan   { box-shadow: 0 0 20px rgba(0,229,255,0.35); }
 .glow-violet { box-shadow: 0 0 20px rgba(139,92,246,0.35); }
-.glow-sm    { box-shadow: 0 0 8px rgba(0,229,255,0.18); }
+.glow-orange { box-shadow: 0 0 20px rgba(249,115,22,0.35); }
+.glow-sm     { box-shadow: 0 0 8px rgba(0,229,255,0.18); }
 
 .text-glow-cyan { text-shadow: 0 0 12px rgba(0,229,255,0.6); }
 .text-glow-violet { text-shadow: 0 0 12px rgba(139,92,246,0.6); }
@@ -98,3 +104,17 @@ input[type="range"].violet::-webkit-slider-thumb {
 
 @keyframes spin-slow { to { transform: rotate(360deg); } }
 .animate-spin-slow { animation: spin-slow 2s linear infinite; }
+
+@keyframes scanline {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { transform: translateY(2000%); opacity: 0; }
+}
+.animate-scanline { animation: scanline 2.2s ease-in-out infinite; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.3; transform: scale(0.6); }
+}
+.animate-pulse-dot { animation: pulse-dot 1.4s ease-in-out infinite; }

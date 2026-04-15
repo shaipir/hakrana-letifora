@@ -39,7 +39,8 @@
       "Bash(curl -v \"https://generativelanguage.googleapis.com/v1beta/models?key=TESTKEY&pageSize=100\")",
       "Bash(npx skills:*)",
       "Bash(node \"C:/Users/Shai/projects/hakrana-letifora/.claude/worktrees/zealous-nash/.agents/skills/impeccable/scripts/cleanup-deprecated.mjs\")",
-      "Bash(gh pr:*)"
+      "Bash(gh pr:*)",
+      "mcp__github__create_pull_request"
     ]
   }
 }

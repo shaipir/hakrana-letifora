@@ -36,12 +36,15 @@ export default function LoopControlsPanel() {
           </button>
           <button
             onClick={() => { updateLoopSettings({ outputMode: 'loop' }); setExpanded(true); }}
-            className={`px-4 py-1.5 transition-colors font-medium ${
+            className={`flex items-center gap-1.5 px-4 py-1.5 transition-colors font-medium ${
               s.outputMode === 'loop'
                 ? 'bg-ar-accent/20 text-ar-accent'
                 : 'text-ar-text-muted hover:text-ar-text'
             }`}
           >
+            {s.outputMode === 'loop' && (
+              <span className="w-1.5 h-1.5 rounded-full bg-ar-accent animate-pulse-dot" />
+            )}
             🎞 Loop
           </button>
         </div>

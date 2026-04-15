@@ -244,45 +244,45 @@ export default function TopBar() {
 
   return (
     <>
-      <header className="h-14 flex items-center px-4 gap-3 border-b border-ar-border bg-ar-panel shrink-0 z-20">
+      <header className="h-[52px] flex items-center px-4 gap-3 border-b border-ar-border bg-ar-panel shrink-0 z-20">
         {/* Brand */}
-        <div className="flex items-center gap-2 mr-2">
-          <div className="w-7 h-7 rounded-md bg-ar-accent/10 border border-ar-accent/30 flex items-center justify-center">
-            <Layers className="w-4 h-4 text-ar-accent" />
+        <div className="flex items-center gap-2 mr-1">
+          <div className="w-6 h-6 rounded bg-ar-accent/10 border border-ar-accent/30 flex items-center justify-center">
+            <Layers className="w-3.5 h-3.5 text-ar-accent" />
           </div>
-          <span className="font-semibold text-sm tracking-wide text-ar-text">ArtRevive</span>
+          <span className="font-semibold text-xs tracking-[0.12em] uppercase text-ar-text">ArtRevive</span>
         </div>
 
-        <div className="w-px h-5 bg-ar-border mx-1" />
+        <div className="w-px h-4 bg-ar-border mx-1" />
 
         {/* Upload */}
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm border border-ar-border bg-ar-surface hover:bg-ar-border hover:border-ar-text-dim transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1 rounded text-xs border border-ar-border bg-ar-surface hover:bg-ar-border hover:border-ar-text-dim transition-colors disabled:opacity-50 tracking-wide"
         >
-          <Upload className="w-3.5 h-3.5" />
-          {isUploading ? 'Loading...' : hasImage ? 'Replace' : 'Upload Image'}
+          <Upload className="w-3 h-3" />
+          {isUploading ? 'Loading…' : hasImage ? 'Replace' : 'Upload'}
         </button>
         <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileChange} />
 
         {/* Mode switch */}
-        <div className="flex rounded-md border border-ar-border bg-ar-surface overflow-hidden">
+        <div className="flex rounded border border-ar-border bg-ar-surface overflow-hidden">
           {([
             { id: 'restyle',          label: 'World Transform' },
-            { id: 'glow-sculpture',   label: '✨ Glow Sculpture' },
-            { id: 'house-projection', label: '🏠 House Projection' },
+            { id: 'glow-sculpture',   label: 'Glow Sculpture' },
+            { id: 'house-projection', label: 'House Projection' },
           ] as const).map((m, i, arr) => (
             <button
               key={m.id}
               onClick={() => setMode(m.id)}
-              className={`px-3 py-1.5 text-sm transition-colors ${i < arr.length - 1 ? 'border-r border-ar-border' : ''} ${
+              className={`px-3 py-1 text-xs tracking-wide transition-all ${i < arr.length - 1 ? 'border-r border-ar-border' : ''} ${
                 activeMode === m.id
                   ? m.id === 'restyle'
-                    ? 'bg-ar-violet/20 text-ar-violet'
+                    ? 'bg-ar-violet/20 text-ar-violet shadow-[inset_0_-1px_0_rgba(139,92,246,0.5)]'
                     : m.id === 'glow-sculpture'
-                    ? 'bg-ar-accent/10 text-ar-accent'
-                    : 'bg-orange-500/10 text-orange-400'
+                    ? 'bg-ar-accent/10 text-ar-accent shadow-[inset_0_-1px_0_rgba(0,229,255,0.5)]'
+                    : 'bg-orange-500/10 text-orange-400 shadow-[inset_0_-1px_0_rgba(249,115,22,0.5)]'
                   : 'text-ar-text-muted hover:text-ar-text'
               }`}
             >
@@ -297,11 +297,11 @@ export default function TopBar() {
         <button
           onClick={handleGenerate}
           disabled={!hasImage || isBusy}
-          className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${modeAccentClass}`}
+          className={`flex items-center gap-1.5 px-4 py-1 rounded text-xs font-medium tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed ${modeAccentClass}`}
         >
-          <Zap className={`w-3.5 h-3.5 ${isBusy ? 'animate-spin' : ''}`} />
+          <Zap className={`w-3 h-3 ${isBusy ? 'animate-spin' : ''}`} />
           {isBusy
-            ? (isGeneratingLoop ? 'Generating Loop...' : 'Generating...')
+            ? (isGeneratingLoop ? 'Building Loop…' : 'Generating…')
             : isLoopMode ? 'Generate Loop' : 'Generate'}
         </button>
 
@@ -309,25 +309,28 @@ export default function TopBar() {
         <button
           onClick={handleExport}
           disabled={(!selectedAsset && !generatedLoop) || isExporting}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm border border-ar-border bg-ar-surface hover:bg-ar-border transition-colors disabled:opacity-40"
+          className="flex items-center gap-1.5 px-3 py-1 rounded text-xs border border-ar-border bg-ar-surface hover:bg-ar-border transition-colors disabled:opacity-40 tracking-wide"
         >
-          <Download className="w-3.5 h-3.5" />
-          {isExporting ? 'Exporting...' : 'Export'}
+          <Download className="w-3 h-3" />
+          {isExporting ? 'Exporting…' : 'Export'}
         </button>
 
         {/* Settings */}
         <button
           onClick={() => setShowSettings(true)}
-          title="Settings"
-          className={`p-2 rounded-md transition-colors ${hasKey ? 'text-ar-accent hover:bg-ar-accent/10' : 'text-ar-neon-pink hover:bg-ar-neon-pink/10'}`}
+          title={hasKey ? 'Settings' : 'Add Gemini API key'}
+          className="relative p-1.5 rounded transition-colors text-ar-text-muted hover:text-ar-text hover:bg-ar-border"
         >
           <Settings className="w-3.5 h-3.5" />
+          {!hasKey && (
+            <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-ar-neon-pink" />
+          )}
         </button>
 
         {/* Reset */}
         {hasImage && (
           <button onClick={resetProject} title="Reset project"
-            className="p-2 rounded-md text-ar-text-muted hover:text-ar-text hover:bg-ar-border transition-colors">
+            className="p-1.5 rounded text-ar-text-muted hover:text-ar-text hover:bg-ar-border transition-colors">
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
         )}

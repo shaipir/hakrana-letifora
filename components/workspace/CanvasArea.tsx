@@ -68,15 +68,19 @@ export default function CanvasArea() {
       onDragLeave={() => setIsDragging(false)}
       onDrop={handleDrop}
     >
-      {/* Empty state */}
+      {/* Empty state — corner bracket upload zone */}
       {!source && !isUploading && (
-        <div className="flex flex-col items-center gap-4 cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
-          <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-ar-border group-hover:border-ar-accent/50 flex items-center justify-center transition-colors">
-            <Upload className="w-8 h-8 text-ar-text-dim group-hover:text-ar-accent/60 transition-colors" />
-          </div>
-          <div className="text-center">
-            <p className="text-ar-text text-sm font-medium">Drop an image here</p>
-            <p className="text-ar-text-dim text-xs mt-1">or click to upload · JPEG, PNG, WebP · max 20 MB</p>
+        <div className="relative w-56 h-56 cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
+          <span className="absolute top-0 left-0 w-7 h-7 border-t-2 border-l-2 border-ar-border/40 group-hover:border-ar-accent/70 transition-colors" />
+          <span className="absolute top-0 right-0 w-7 h-7 border-t-2 border-r-2 border-ar-border/40 group-hover:border-ar-accent/70 transition-colors" />
+          <span className="absolute bottom-0 left-0 w-7 h-7 border-b-2 border-l-2 border-ar-border/40 group-hover:border-ar-accent/70 transition-colors" />
+          <span className="absolute bottom-0 right-0 w-7 h-7 border-b-2 border-r-2 border-ar-border/40 group-hover:border-ar-accent/70 transition-colors" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <Upload className="w-6 h-6 text-ar-text-dim group-hover:text-ar-accent/60 transition-colors" />
+            <div className="text-center">
+              <p className="text-ar-text text-xs font-medium tracking-wide">Drop source image</p>
+              <p className="text-ar-text-dim text-[10px] mt-1.5 tracking-[0.12em] uppercase">JPEG · PNG · WebP · 20MB</p>
+            </div>
           </div>
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f); }} />
@@ -109,15 +113,16 @@ export default function CanvasArea() {
       {source && !generatedLoop && (activeMode === 'restyle' || activeMode === 'glow-sculpture' || activeMode === 'house-projection') && (
         <div className="relative w-full h-full flex items-center justify-center">
           {isLoadingAny ? (
-            <div className="relative">
-              <div
-                className="animate-shimmer rounded-lg"
-                style={{ width: Math.min(source.width || 600, 800), height: Math.min(source.height || 400, 600), maxWidth: '80vw', maxHeight: '70vh' }}
-              />
+            <div
+              className="relative rounded-sm overflow-hidden border border-ar-border/30 bg-ar-panel/40"
+              style={{ width: Math.min(source.width || 600, 800), height: Math.min(source.height || 400, 600), maxWidth: '80vw', maxHeight: '70vh' }}
+            >
+              {/* Scanline */}
+              <div className={`absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-ar-accent to-transparent animate-scanline opacity-80 ${activeMode === 'restyle' ? 'via-ar-violet' : activeMode === 'glow-sculpture' ? 'via-ar-accent' : 'via-orange-400'}`} />
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                <div className={`w-8 h-8 border-2 border-ar-border rounded-full animate-spin ${activeMode === 'restyle' ? 'border-t-ar-violet' : activeMode === 'glow-sculpture' ? 'border-t-ar-accent' : 'border-t-orange-400'}`} />
-                <span className="text-ar-text-muted text-sm">
-                  {isGeneratingLoop ? 'Generating loop frames...' : 'Generating...'}
+                <div className={`w-5 h-5 border border-ar-border/60 rounded-full animate-spin ${activeMode === 'restyle' ? 'border-t-ar-violet' : activeMode === 'glow-sculpture' ? 'border-t-ar-accent' : 'border-t-orange-400'}`} />
+                <span className="text-ar-text-dim text-[10px] tracking-[0.2em] uppercase">
+                  {isGeneratingLoop ? 'Building Loop' : 'Generating'}
                 </span>
               </div>
             </div>
@@ -161,37 +166,42 @@ export default function CanvasArea() {
               <img
                 src={displayUrl}
                 alt={selectedResult ? 'Generated result' : 'Source image'}
-                className="max-w-full max-h-full object-contain rounded-sm shadow-2xl animate-fade-in"
-                style={{ maxWidth: '80vw', maxHeight: '70vh' }}
+                className="max-w-full max-h-full object-contain rounded-sm animate-fade-in"
+                style={{
+                  maxWidth: '80vw', maxHeight: '70vh',
+                  boxShadow: selectedResult
+                    ? '0 0 80px rgba(0,0,0,0.9), 0 0 1px rgba(255,255,255,0.04)'
+                    : '0 8px 40px rgba(0,0,0,0.6)',
+                }}
               />
               {selectedResult && source && (
                 <button
                   onMouseEnter={() => setShowOriginal(true)}
                   onMouseLeave={() => setShowOriginal(false)}
-                  className="absolute bottom-3 right-3 px-2 py-1 rounded bg-black/60 border border-ar-border text-xs text-ar-text-muted hover:text-ar-text transition-colors"
+                  className="absolute bottom-3 right-3 px-2 py-0.5 rounded bg-black/70 border border-ar-border/50 text-[10px] tracking-widest uppercase text-ar-text-dim hover:text-ar-text transition-colors"
                 >
-                  {showOriginal ? 'Original' : 'Hold to compare'}
+                  {showOriginal ? 'Original' : 'Compare'}
                 </button>
               )}
             </div>
           ) : null}
 
-          {/* Compare mode controls */}
+          {/* Compare mode controls — floating pill at bottom center */}
           {selectedResult && source && !isLoadingAny && (
-            <div className="absolute top-3 right-3 flex gap-1">
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-0.5 bg-black/70 backdrop-blur-sm rounded-full px-1.5 py-1 border border-ar-border/40">
               {([
-                { id: 'single',       icon: <Maximize2 className="w-3 h-3" />,  title: 'Single view' },
+                { id: 'single',       icon: <Maximize2 className="w-3 h-3" />,  title: 'Single' },
                 { id: 'side-by-side', icon: <Columns2 className="w-3 h-3" />,   title: 'Side by side' },
-                { id: 'slider',       icon: <Layers className="w-3 h-3" />,     title: 'Slider compare' },
+                { id: 'slider',       icon: <Layers className="w-3 h-3" />,     title: 'Slider' },
               ] as { id: CompareMode; icon: React.ReactNode; title: string }[]).map((cm) => (
                 <button
                   key={cm.id}
                   onClick={() => setCompareMode(cm.id)}
                   title={cm.title}
-                  className={`p-1.5 rounded border transition-colors ${
+                  className={`p-1.5 rounded-full transition-colors ${
                     compareMode === cm.id
-                      ? 'bg-ar-accent/20 border-ar-accent/50 text-ar-accent'
-                      : 'bg-black/50 border-ar-border text-ar-text-muted hover:text-ar-text'
+                      ? 'bg-ar-accent/20 text-ar-accent'
+                      : 'text-ar-text-dim hover:text-ar-text'
                   }`}
                 >
                   {cm.icon}

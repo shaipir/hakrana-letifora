@@ -3,17 +3,17 @@
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import { WorldPreset, VisualLanguagePreset, RestyleMode } from '@/lib/types';
 
-const WORLD_PRESETS: { id: WorldPreset; label: string; emoji: string }[] = [
-  { id: 'forest',  label: 'Forest',  emoji: '🌿' },
-  { id: 'sea',     label: 'Sea',     emoji: '🌊' },
-  { id: 'fire',    label: 'Fire',    emoji: '🔥' },
-  { id: 'spirit',  label: 'Spirit',  emoji: '👻' },
-  { id: 'cartoon', label: 'Cartoon', emoji: '🎨' },
-  { id: 'ice',     label: 'Ice',     emoji: '❄️' },
-  { id: 'crystal', label: 'Crystal', emoji: '💎' },
-  { id: 'shadow',  label: 'Shadow',  emoji: '🌑' },
-  { id: 'floral',  label: 'Floral',  emoji: '🌸' },
-  { id: 'machine', label: 'Machine', emoji: '⚙️' },
+const WORLD_PRESETS: { id: WorldPreset; label: string; emoji: string; hoverClass: string }[] = [
+  { id: 'forest',  label: 'Forest',  emoji: '🌿', hoverClass: 'hover:border-green-500/50 hover:text-green-400' },
+  { id: 'sea',     label: 'Sea',     emoji: '🌊', hoverClass: 'hover:border-blue-400/50 hover:text-blue-300' },
+  { id: 'fire',    label: 'Fire',    emoji: '🔥', hoverClass: 'hover:border-orange-500/50 hover:text-orange-400' },
+  { id: 'spirit',  label: 'Spirit',  emoji: '👻', hoverClass: 'hover:border-purple-400/50 hover:text-purple-300' },
+  { id: 'cartoon', label: 'Cartoon', emoji: '🎨', hoverClass: 'hover:border-yellow-400/50 hover:text-yellow-300' },
+  { id: 'ice',     label: 'Ice',     emoji: '❄️', hoverClass: 'hover:border-cyan-300/50 hover:text-cyan-200' },
+  { id: 'crystal', label: 'Crystal', emoji: '💎', hoverClass: 'hover:border-pink-400/50 hover:text-pink-300' },
+  { id: 'shadow',  label: 'Shadow',  emoji: '🌑', hoverClass: 'hover:border-gray-400/50 hover:text-gray-300' },
+  { id: 'floral',  label: 'Floral',  emoji: '🌸', hoverClass: 'hover:border-rose-400/50 hover:text-rose-300' },
+  { id: 'machine', label: 'Machine', emoji: '⚙️', hoverClass: 'hover:border-zinc-400/50 hover:text-zinc-300' },
 ];
 
 const VISUAL_LANGUAGES: { id: VisualLanguagePreset; label: string }[] = [
@@ -80,7 +80,7 @@ export default function RestylePanel() {
               className={`flex items-center gap-1.5 px-2.5 py-2 rounded-md border text-sm transition-all ${
                 s.worldPreset === w.id
                   ? 'border-ar-accent bg-ar-accent/10 text-ar-text'
-                  : 'border-ar-border bg-ar-surface text-ar-text-muted hover:border-ar-accent/40 hover:text-ar-text'
+                  : `border-ar-border bg-ar-surface text-ar-text-muted ${w.hoverClass}`
               }`}>
               <span>{w.emoji}</span>
               <span className="text-xs font-medium">{w.label}</span>
