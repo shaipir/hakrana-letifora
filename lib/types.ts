@@ -82,6 +82,8 @@ export interface HouseProjectionSettings {
   darknessContrast: number;
   ornamentationLevel: number;
   atmosphereStrength: number;
+  /** Always true — uploaded photo is the contour base. Cannot be disabled. */
+  usePhotoContoursAsBase: true;
 }
 
 export type StyleWorld =
@@ -181,13 +183,33 @@ export interface LoopSettings {
   bpmSync: BpmSyncSettings;
 }
 
-// ─── Projection Mask ──────────────────────────────────────────────────────────
+// ─── Projection Areas (project or blackout) ───────────────────────────────────
+/** @deprecated use ProjectionArea */
 export interface ProjectionMask {
   id: string;
   type: 'rectangle' | 'polygon' | 'painted';
   points: { x: number; y: number }[];
+  feather: number;
+  inverted: boolean;
+}
+
+export interface ProjectionArea {
+  id: string;
+  kind: 'project' | 'blackout';   // project = keep, blackout = mask out
+  type: 'rectangle' | 'polygon' | 'painted';
+  points: { x: number; y: number }[];
   feather: number;   // 0–50 px
   inverted: boolean;
+}
+
+// ─── Reference Projection ─────────────────────────────────────────────────────
+export interface ReferenceProjectionSettings {
+  active: boolean;
+  viewMode: 'original' | 'transformed' | 'overlay';
+  showGrid: boolean;
+  showCornerMarkers: boolean;
+  brightness: number;   // 0.2–2.0
+  opacity: number;      // 0–1, for overlay blend
 }
 
 // ─── Object Isolation ─────────────────────────────────────────────────────────
@@ -317,12 +339,17 @@ export interface ArtworkProject {
   houseProjectionSettings: HouseProjectionSettings;
   loopSettings: LoopSettings;
   // Projection workflow
-  projectionMasks: ProjectionMask[];
-  activeMaskId: string | null;
+  projectionAreas: ProjectionArea[];
+  activeAreaId: string | null;
+  /** @deprecated kept for migration only */
+  projectionMasks?: ProjectionMask[];
+  /** @deprecated kept for migration only */
+  activeMaskId?: string | null;
   objectIsolation: ObjectIsolationSettings;
   projectionZones: ProjectionZone[];
   activeZoneId: string | null;
   warpSettings: WarpSettings;
+  referenceProjection: ReferenceProjectionSettings;
   // History
   generationHistory: GenerationHistoryItem[];
   createdAt: string;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Upload, Maximize2, Columns2, Layers } from 'lucide-react';
+import { Upload, Maximize2, Columns2, Layers, Crosshair, Grid, Sun } from 'lucide-react';
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import { UploadedAsset } from '@/lib/types';
 import LoopPlayer from '@/components/canvas/LoopPlayer';
@@ -15,6 +15,7 @@ export default function CanvasArea() {
     isUploading, uploadError,
     setUploadedAsset, setUploading, setUploadError,
     selectedResultId, generatedLoop,
+    updateReferenceProjection,
   } = useArtReviveStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -22,6 +23,8 @@ export default function CanvasArea() {
   const [showOriginal, setShowOriginal] = useState(false);
   const [compareMode, setCompareMode] = useState<CompareMode>('single');
   const [sliderPos, setSliderPos] = useState(50);
+
+  const refProj = project.referenceProjection;
 
   const selectedResult = project.generatedAssets.find((a) => a.id === selectedResultId);
   const source = project.uploadedAsset;
@@ -102,8 +105,145 @@ export default function CanvasArea() {
         </div>
       )}
 
+      {/* ── Reference Projection mode ─────────────────────────────────── */}
+      {source && refProj.active && !isLoadingAny && (
+        <div className="relative w-full h-full flex flex-col items-center justify-center">
+          {/* Toolbar */}
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-black/80 backdrop-blur-sm border border-ar-border/60 rounded-full px-2 py-1.5">
+            {/* View mode toggle */}
+            {(['original', 'transformed', 'overlay'] as const).map((vm) => (
+              <button
+                key={vm}
+                onClick={() => updateReferenceProjection({ viewMode: vm })}
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium transition-colors capitalize ${
+                  refProj.viewMode === vm
+                    ? 'bg-ar-accent text-black'
+                    : 'text-ar-text-muted hover:text-ar-text'
+                }`}
+              >
+                {vm}
+              </button>
+            ))}
+            <div className="w-px h-4 bg-ar-border mx-1" />
+            {/* Brightness */}
+            <Sun className="w-3 h-3 text-ar-text-dim shrink-0" />
+            <input
+              type="range" min={0.2} max={2} step={0.05}
+              value={refProj.brightness}
+              onChange={(e) => updateReferenceProjection({ brightness: parseFloat(e.target.value) })}
+              className="w-20 accent-ar-accent h-1"
+            />
+            <div className="w-px h-4 bg-ar-border mx-1" />
+            {/* Grid toggle */}
+            <button
+              onClick={() => updateReferenceProjection({ showGrid: !refProj.showGrid })}
+              title="Grid overlay"
+              className={`p-1 rounded transition-colors ${refProj.showGrid ? 'text-ar-accent' : 'text-ar-text-dim hover:text-ar-text'}`}
+            >
+              <Grid className="w-3.5 h-3.5" />
+            </button>
+            {/* Corner markers */}
+            <button
+              onClick={() => updateReferenceProjection({ showCornerMarkers: !refProj.showCornerMarkers })}
+              title="Corner markers"
+              className={`p-1 rounded transition-colors ${refProj.showCornerMarkers ? 'text-ar-accent' : 'text-ar-text-dim hover:text-ar-text'}`}
+            >
+              <Crosshair className="w-3.5 h-3.5" />
+            </button>
+            <div className="w-px h-4 bg-ar-border mx-1" />
+            {/* Exit */}
+            <button
+              onClick={() => updateReferenceProjection({ active: false })}
+              className="px-2 py-0.5 rounded text-[10px] text-ar-neon-pink/80 hover:text-ar-neon-pink border border-ar-neon-pink/30 hover:border-ar-neon-pink/60 transition-colors"
+            >
+              Exit
+            </button>
+          </div>
+
+          {/* Image display */}
+          <div className="relative" style={{ maxWidth: '80vw', maxHeight: '70vh' }}>
+            {/* Overlay: original + transformed blended */}
+            {refProj.viewMode === 'overlay' && selectedResult ? (
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={selectedResult.url}
+                  alt="Transformed"
+                  className="max-w-full max-h-full object-contain rounded-sm"
+                  style={{ maxWidth: '80vw', maxHeight: '70vh', filter: `brightness(${refProj.brightness})` }}
+                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={source.url}
+                  alt="Original overlay"
+                  className="absolute inset-0 max-w-full max-h-full object-contain"
+                  style={{ opacity: refProj.opacity, mixBlendMode: 'screen', filter: `brightness(${refProj.brightness})` }}
+                />
+              </div>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={refProj.viewMode === 'transformed' && selectedResult ? selectedResult.url : source.url}
+                alt="Reference projection"
+                className="max-w-full max-h-full object-contain rounded-sm"
+                style={{ maxWidth: '80vw', maxHeight: '70vh', filter: `brightness(${refProj.brightness})` }}
+              />
+            )}
+
+            {/* Grid overlay */}
+            {refProj.showGrid && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  backgroundImage: 'linear-gradient(rgba(0,229,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.15) 1px, transparent 1px)',
+                  backgroundSize: '10% 10%',
+                }}
+              />
+            )}
+
+            {/* Corner markers */}
+            {refProj.showCornerMarkers && (
+              <>
+                {[
+                  { top: 0, left: 0, borderTop: true, borderLeft: true },
+                  { top: 0, right: 0, borderTop: true, borderRight: true },
+                  { bottom: 0, left: 0, borderBottom: true, borderLeft: true },
+                  { bottom: 0, right: 0, borderBottom: true, borderRight: true },
+                ].map((pos, i) => (
+                  <span
+                    key={i}
+                    className="absolute w-6 h-6 pointer-events-none"
+                    style={{
+                      ...pos,
+                      borderTop: pos.borderTop ? '2px solid rgba(0,229,255,0.8)' : undefined,
+                      borderBottom: pos.borderBottom ? '2px solid rgba(0,229,255,0.8)' : undefined,
+                      borderLeft: pos.borderLeft ? '2px solid rgba(0,229,255,0.8)' : undefined,
+                      borderRight: pos.borderRight ? '2px solid rgba(0,229,255,0.8)' : undefined,
+                    }}
+                  />
+                ))}
+              </>
+            )}
+          </div>
+
+          {/* Overlay opacity slider when in overlay mode */}
+          {refProj.viewMode === 'overlay' && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/70 rounded-full px-3 py-1.5 border border-ar-border/40">
+              <span className="text-[10px] text-ar-text-dim">Overlay</span>
+              <input
+                type="range" min={0} max={1} step={0.05}
+                value={refProj.opacity}
+                onChange={(e) => updateReferenceProjection({ opacity: parseFloat(e.target.value) })}
+                className="w-24 accent-ar-accent h-1"
+              />
+              <span className="text-[10px] text-ar-text-dim">{Math.round(refProj.opacity * 100)}%</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Loop player */}
-      {source && generatedLoop && generatedLoop.frames.length > 0 && !isLoadingAny && (
+      {source && !refProj.active && generatedLoop && generatedLoop.frames.length > 0 && !isLoadingAny && (
         <div className="w-full h-full flex flex-col">
           <LoopPlayer
             frames={generatedLoop.frames}
@@ -115,7 +255,7 @@ export default function CanvasArea() {
       )}
 
       {/* Still image display */}
-      {source && !generatedLoop && (activeMode === 'restyle' || activeMode === 'glow-sculpture' || activeMode === 'house-projection') && (
+      {source && !refProj.active && !generatedLoop && (activeMode === 'restyle' || activeMode === 'glow-sculpture' || activeMode === 'house-projection') && (
         <div className="relative w-full h-full flex items-center justify-center">
           {isLoadingAny ? (
             <div
@@ -193,7 +333,7 @@ export default function CanvasArea() {
 
           {/* Compare mode controls — floating pill at bottom center */}
           {selectedResult && source && !isLoadingAny && (
-            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-0.5 bg-black/70 backdrop-blur-sm rounded-full px-1.5 py-1 border border-ar-border/40">
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-black/70 backdrop-blur-sm rounded-full px-1.5 py-1 border border-ar-border/40">
               {([
                 { id: 'single',       icon: <Maximize2 className="w-3 h-3" />,  title: 'Single' },
                 { id: 'side-by-side', icon: <Columns2 className="w-3 h-3" />,   title: 'Side by side' },
@@ -212,6 +352,15 @@ export default function CanvasArea() {
                   {cm.icon}
                 </button>
               ))}
+              <div className="w-px h-4 bg-ar-border mx-0.5" />
+              <button
+                onClick={() => updateReferenceProjection({ active: true, viewMode: 'original' })}
+                title="Reference Projection — align projector using original image"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] text-ar-text-dim hover:text-ar-accent transition-colors"
+              >
+                <Crosshair className="w-3 h-3" />
+                Align
+              </button>
             </div>
           )}
         </div>

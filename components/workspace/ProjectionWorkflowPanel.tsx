@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import {
   ChevronDown, ChevronUp, Plus, Trash2, Copy, Eye, EyeOff,
-  Square, Pentagon, Brush, RotateCcw, Grid3x3,
+  Square, Pentagon, Brush, RotateCcw, Grid3x3, Crosshair,
 } from 'lucide-react';
 import { useArtReviveStore } from '@/lib/artrevive-store';
-import { ProjectionMask, ProjectionZone, WarpPreset } from '@/lib/types';
+import { ProjectionArea, ProjectionZone, WarpPreset } from '@/lib/types';
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 
@@ -33,68 +33,100 @@ function Section({
   );
 }
 
-// ─── 1. Projection Area / Mask ────────────────────────────────────────────────
+// ─── 1. Projection Areas & Blackout Areas ────────────────────────────────────
 
-function ProjectionMaskSection() {
-  const { project, addProjectionMask, updateProjectionMask, removeProjectionMask, setActiveMask } = useArtReviveStore();
-  const { projectionMasks, activeMaskId } = project;
+function ProjectionAreasSection() {
+  const {
+    project, addProjectionArea, updateProjectionArea,
+    removeProjectionArea, setActiveArea, updateReferenceProjection,
+  } = useArtReviveStore();
+  const { projectionAreas, activeAreaId } = project;
 
-  function createMask(type: ProjectionMask['type']) {
-    const mask: ProjectionMask = {
-      id: crypto.randomUUID(),
-      type,
-      points: [],
-      feather: 0,
-      inverted: false,
+  function createArea(kind: ProjectionArea['kind'], type: ProjectionArea['type']) {
+    const area: ProjectionArea = {
+      id: crypto.randomUUID(), kind, type, points: [], feather: 0, inverted: false,
     };
-    addProjectionMask(mask);
+    addProjectionArea(area);
   }
 
-  const activeMask = projectionMasks.find((m) => m.id === activeMaskId);
+  const activeArea = projectionAreas.find((a) => a.id === activeAreaId);
 
   return (
     <div className="px-4 space-y-3">
-      {/* Tool buttons */}
-      <div className="grid grid-cols-3 gap-1">
-        {([
-          { type: 'rectangle' as const, icon: <Square className="w-3.5 h-3.5" />, label: 'Rectangle' },
-          { type: 'polygon' as const,   icon: <Pentagon className="w-3.5 h-3.5" />, label: 'Polygon' },
-          { type: 'painted' as const,   icon: <Brush className="w-3.5 h-3.5" />, label: 'Paint' },
-        ]).map(({ type, icon, label }) => (
-          <button
-            key={type}
-            onClick={() => createMask(type)}
-            className="flex flex-col items-center gap-1 py-2 rounded-md border border-ar-border bg-ar-surface hover:bg-ar-border/30 text-ar-text-muted hover:text-ar-text text-[10px] transition-colors"
-          >
-            {icon}
-            {label}
-          </button>
-        ))}
+      {/* Reference projection entry */}
+      <button
+        onClick={() => updateReferenceProjection({ active: true, viewMode: 'original' })}
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-ar-accent/30 bg-ar-accent/5 hover:bg-ar-accent/10 text-xs text-ar-accent transition-colors"
+      >
+        <Crosshair className="w-3.5 h-3.5 shrink-0" />
+        <span>Reference Projection — align projector</span>
+      </button>
+
+      {/* Add projection area */}
+      <div>
+        <span className="text-[10px] text-ar-text-dim uppercase tracking-widest block mb-1.5">Add Projection Area</span>
+        <div className="grid grid-cols-3 gap-1">
+          {([
+            { type: 'rectangle' as const, icon: <Square className="w-3 h-3" />,   label: 'Rect' },
+            { type: 'polygon' as const,   icon: <Pentagon className="w-3 h-3" />, label: 'Poly' },
+            { type: 'painted' as const,   icon: <Brush className="w-3 h-3" />,    label: 'Paint' },
+          ]).map(({ type, icon, label }) => (
+            <button
+              key={type}
+              onClick={() => createArea('project', type)}
+              className="flex flex-col items-center gap-1 py-2 rounded-md border border-ar-accent/30 bg-ar-accent/5 hover:bg-ar-accent/10 text-ar-accent text-[10px] transition-colors"
+            >
+              {icon}
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Mask list */}
-      {projectionMasks.length > 0 && (
+      {/* Add blackout area */}
+      <div>
+        <span className="text-[10px] text-ar-text-dim uppercase tracking-widest block mb-1.5">Add Blackout Area</span>
+        <div className="grid grid-cols-3 gap-1">
+          {([
+            { type: 'rectangle' as const, icon: <Square className="w-3 h-3" />,   label: 'Rect' },
+            { type: 'polygon' as const,   icon: <Pentagon className="w-3 h-3" />, label: 'Poly' },
+            { type: 'painted' as const,   icon: <Brush className="w-3 h-3" />,    label: 'Paint' },
+          ]).map(({ type, icon, label }) => (
+            <button
+              key={type}
+              onClick={() => createArea('blackout', type)}
+              className="flex flex-col items-center gap-1 py-2 rounded-md border border-ar-neon-pink/30 bg-ar-neon-pink/5 hover:bg-ar-neon-pink/10 text-ar-neon-pink text-[10px] transition-colors"
+            >
+              {icon}
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Area list */}
+      {projectionAreas.length > 0 && (
         <div className="space-y-1">
-          {projectionMasks.map((mask) => (
+          {projectionAreas.map((area) => (
             <div
-              key={mask.id}
-              onClick={() => setActiveMask(mask.id)}
+              key={area.id}
+              onClick={() => setActiveArea(area.id)}
               className={`flex items-center gap-2 px-2 py-1.5 rounded-md border cursor-pointer transition-colors ${
-                activeMaskId === mask.id
-                  ? 'bg-ar-accent/10 border-ar-accent/40 text-ar-accent'
+                activeAreaId === area.id
+                  ? area.kind === 'project'
+                    ? 'bg-ar-accent/10 border-ar-accent/40 text-ar-accent'
+                    : 'bg-ar-neon-pink/10 border-ar-neon-pink/40 text-ar-neon-pink'
                   : 'bg-ar-surface border-ar-border text-ar-text-muted hover:text-ar-text'
               }`}
             >
-              <span className="text-xs flex-1 truncate capitalize">{mask.type} mask</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono uppercase ${
+                area.kind === 'project' ? 'bg-ar-accent/20 text-ar-accent' : 'bg-ar-neon-pink/20 text-ar-neon-pink'
+              }`}>
+                {area.kind}
+              </span>
+              <span className="text-xs flex-1 truncate capitalize">{area.type}</span>
               <button
-                onClick={(e) => { e.stopPropagation(); updateProjectionMask(mask.id, { inverted: !mask.inverted }); }}
-                title="Invert mask"
-                className="text-ar-text-dim hover:text-ar-text transition-colors p-0.5"
-              >
-                <RotateCcw className="w-3 h-3" />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); removeProjectionMask(mask.id); }}
+                onClick={(e) => { e.stopPropagation(); removeProjectionArea(area.id); }}
                 className="text-ar-text-dim hover:text-ar-neon-pink transition-colors p-0.5"
               >
                 <Trash2 className="w-3 h-3" />
@@ -104,43 +136,43 @@ function ProjectionMaskSection() {
         </div>
       )}
 
-      {/* Active mask controls */}
-      {activeMask && (
+      {/* Active area controls */}
+      {activeArea && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="text-xs text-ar-text-muted w-24 shrink-0">Feather Edge</span>
             <input
               type="range" min={0} max={50} step={1}
-              value={activeMask.feather}
-              onChange={(e) => updateProjectionMask(activeMask.id, { feather: Number(e.target.value) })}
+              value={activeArea.feather}
+              onChange={(e) => updateProjectionArea(activeArea.id, { feather: Number(e.target.value) })}
               className="flex-1 accent-ar-accent h-1"
             />
-            <span className="text-xs text-ar-text-dim w-8 text-right">{activeMask.feather}px</span>
+            <span className="text-xs text-ar-text-dim w-8 text-right">{activeArea.feather}px</span>
           </div>
           <div className="flex gap-1.5">
             <button
-              onClick={() => updateProjectionMask(activeMask.id, { inverted: !activeMask.inverted })}
+              onClick={() => updateProjectionArea(activeArea.id, { inverted: !activeArea.inverted })}
               className={`flex-1 py-1.5 rounded border text-xs transition-colors ${
-                activeMask.inverted
+                activeArea.inverted
                   ? 'bg-ar-violet/15 border-ar-violet/40 text-ar-violet'
                   : 'border-ar-border text-ar-text-muted hover:text-ar-text'
               }`}
             >
-              Invert Mask
+              Invert
             </button>
             <button
-              onClick={() => updateProjectionMask(activeMask.id, { points: [] })}
+              onClick={() => updateProjectionArea(activeArea.id, { points: [] })}
               className="flex-1 py-1.5 rounded border border-ar-border text-xs text-ar-text-muted hover:text-ar-text transition-colors"
             >
-              Clear Selection
+              Clear
             </button>
           </div>
         </div>
       )}
 
-      {projectionMasks.length === 0 && (
+      {projectionAreas.length === 0 && (
         <p className="text-[10px] text-ar-text-dim text-center py-2">
-          Draw a mask to restrict the projection area
+          Add projection areas (keep) or blackout areas (block light) to define the final output region
         </p>
       )}
     </div>
@@ -496,10 +528,11 @@ export default function ProjectionWorkflowPanel() {
   return (
     <div className="flex flex-col overflow-y-auto">
       <Section
-        title="Projection Area"
-        badge={project.projectionMasks.length > 0 ? `${project.projectionMasks.length}` : undefined}
+        title="Projection Areas"
+        badge={project.projectionAreas.length > 0 ? `${project.projectionAreas.length}` : undefined}
+        defaultOpen
       >
-        <ProjectionMaskSection />
+        <ProjectionAreasSection />
       </Section>
 
       <Section title="Object Isolation" badge={project.objectIsolation.enabled ? 'ON' : undefined}>

@@ -3,8 +3,9 @@ import {
   ArtReviveMode, ArtworkProject, UploadedAsset, GeneratedAsset,
   RestyleSettings, GlowSculptureSettings, HouseProjectionSettings,
   LoopSettings, GeneratedLoop,
-  BpmSyncSettings, ProjectionMask, ObjectIsolationSettings,
+  BpmSyncSettings, ProjectionArea, ObjectIsolationSettings,
   ProjectionZone, WarpSettings, WarpPreset, GenerationHistoryItem,
+  ReferenceProjectionSettings,
 } from './types';
 import { loadProjectFromStorage, saveProjectToStorage, appendGenerationHistory } from './project-persistence';
 
@@ -61,6 +62,16 @@ export const DEFAULT_HOUSE_PROJECTION_SETTINGS: HouseProjectionSettings = {
   darknessContrast: 0.8,
   ornamentationLevel: 0.7,
   atmosphereStrength: 0.75,
+  usePhotoContoursAsBase: true,
+};
+
+export const DEFAULT_REFERENCE_PROJECTION: ReferenceProjectionSettings = {
+  active: false,
+  viewMode: 'original',
+  showGrid: false,
+  showCornerMarkers: false,
+  brightness: 1.0,
+  opacity: 0.5,
 };
 
 export const DEFAULT_BPM_SYNC: BpmSyncSettings = {
@@ -110,16 +121,26 @@ function makeDefaultProject(): ArtworkProject {
   // Try to restore from localStorage on first init
   const saved = loadProjectFromStorage();
   if (saved) {
-    // Migrate: spread saved over defaults so missing new fields are filled in
+    // Migrate old projectionMasks → projectionAreas
+    const legacyAreas: ProjectionArea[] = (saved.projectionMasks ?? []).map((m: any) => ({
+      ...m,
+      kind: 'project' as const,
+    }));
     return {
       ...saved,
-      projectionMasks: saved.projectionMasks ?? [],
-      activeMaskId: saved.activeMaskId ?? null,
+      projectionAreas: saved.projectionAreas ?? legacyAreas,
+      activeAreaId: (saved as any).activeAreaId ?? (saved as any).activeMaskId ?? null,
       objectIsolation: saved.objectIsolation ?? { ...DEFAULT_OBJECT_ISOLATION },
       projectionZones: saved.projectionZones ?? [],
       activeZoneId: saved.activeZoneId ?? null,
       warpSettings: saved.warpSettings ?? { ...DEFAULT_WARP_SETTINGS },
+      referenceProjection: saved.referenceProjection ?? { ...DEFAULT_REFERENCE_PROJECTION },
       generationHistory: saved.generationHistory ?? [],
+      houseProjectionSettings: {
+        ...DEFAULT_HOUSE_PROJECTION_SETTINGS,
+        ...(saved.houseProjectionSettings ?? {}),
+        usePhotoContoursAsBase: true as const,
+      },
       loopSettings: {
         ...DEFAULT_LOOP_SETTINGS,
         ...(saved.loopSettings ?? {}),
@@ -141,12 +162,13 @@ function makeDefaultProject(): ArtworkProject {
     glowSculptureSettings: { ...DEFAULT_GLOW_SCULPTURE_SETTINGS },
     houseProjectionSettings: { ...DEFAULT_HOUSE_PROJECTION_SETTINGS },
     loopSettings: { ...DEFAULT_LOOP_SETTINGS },
-    projectionMasks: [],
-    activeMaskId: null,
+    projectionAreas: [],
+    activeAreaId: null,
     objectIsolation: { ...DEFAULT_OBJECT_ISOLATION },
     projectionZones: [],
     activeZoneId: null,
     warpSettings: { ...DEFAULT_WARP_SETTINGS },
+    referenceProjection: { ...DEFAULT_REFERENCE_PROJECTION },
     generationHistory: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -188,11 +210,14 @@ interface ArtReviveState {
   resetProject: () => void;
   renameProject: (name: string) => void;
 
-  // Projection masks
-  addProjectionMask: (mask: ProjectionMask) => void;
-  updateProjectionMask: (id: string, patch: Partial<ProjectionMask>) => void;
-  removeProjectionMask: (id: string) => void;
-  setActiveMask: (id: string | null) => void;
+  // Projection areas
+  addProjectionArea: (area: ProjectionArea) => void;
+  updateProjectionArea: (id: string, patch: Partial<ProjectionArea>) => void;
+  removeProjectionArea: (id: string) => void;
+  setActiveArea: (id: string | null) => void;
+
+  // Reference projection
+  updateReferenceProjection: (patch: Partial<ReferenceProjectionSettings>) => void;
 
   // Object isolation
   updateObjectIsolation: (patch: Partial<ObjectIsolationSettings>) => void;
@@ -335,42 +360,53 @@ export const useArtReviveStore = create<ArtReviveState>((set, get) => ({
       project: { ...s.project, name, updatedAt: new Date().toISOString() },
     })),
 
-  // ── Projection masks ────────────────────────────────────────────────────────
+  // ── Projection areas ────────────────────────────────────────────────────────
 
-  addProjectionMask: (mask) =>
+  addProjectionArea: (area) =>
     set((s) => ({
       project: {
         ...s.project,
-        projectionMasks: [...s.project.projectionMasks, mask],
-        activeMaskId: mask.id,
+        projectionAreas: [...s.project.projectionAreas, area],
+        activeAreaId: area.id,
         updatedAt: new Date().toISOString(),
       },
     })),
 
-  updateProjectionMask: (id, patch) =>
+  updateProjectionArea: (id, patch) =>
     set((s) => ({
       project: {
         ...s.project,
-        projectionMasks: s.project.projectionMasks.map((m) =>
-          m.id === id ? { ...m, ...patch } : m
+        projectionAreas: s.project.projectionAreas.map((a) =>
+          a.id === id ? { ...a, ...patch } : a
         ),
         updatedAt: new Date().toISOString(),
       },
     })),
 
-  removeProjectionMask: (id) =>
+  removeProjectionArea: (id) =>
     set((s) => ({
       project: {
         ...s.project,
-        projectionMasks: s.project.projectionMasks.filter((m) => m.id !== id),
-        activeMaskId: s.project.activeMaskId === id ? null : s.project.activeMaskId,
+        projectionAreas: s.project.projectionAreas.filter((a) => a.id !== id),
+        activeAreaId: s.project.activeAreaId === id ? null : s.project.activeAreaId,
         updatedAt: new Date().toISOString(),
       },
     })),
 
-  setActiveMask: (id) =>
+  setActiveArea: (id) =>
     set((s) => ({
-      project: { ...s.project, activeMaskId: id, updatedAt: new Date().toISOString() },
+      project: { ...s.project, activeAreaId: id, updatedAt: new Date().toISOString() },
+    })),
+
+  // ── Reference projection ─────────────────────────────────────────────────────
+
+  updateReferenceProjection: (patch) =>
+    set((s) => ({
+      project: {
+        ...s.project,
+        referenceProjection: { ...s.project.referenceProjection, ...patch },
+        updatedAt: new Date().toISOString(),
+      },
     })),
 
   // ── Object isolation ────────────────────────────────────────────────────────
@@ -584,12 +620,13 @@ export const useArtReviveStore = create<ArtReviveState>((set, get) => ({
       glowSculptureSettings: { ...DEFAULT_GLOW_SCULPTURE_SETTINGS },
       houseProjectionSettings: { ...DEFAULT_HOUSE_PROJECTION_SETTINGS },
       loopSettings: { ...DEFAULT_LOOP_SETTINGS },
-      projectionMasks: [],
-      activeMaskId: null,
+      projectionAreas: [],
+      activeAreaId: null,
       objectIsolation: { ...DEFAULT_OBJECT_ISOLATION },
       projectionZones: [],
       activeZoneId: null,
       warpSettings: { ...DEFAULT_WARP_SETTINGS },
+      referenceProjection: { ...DEFAULT_REFERENCE_PROJECTION },
       generationHistory: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

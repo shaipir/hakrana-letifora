@@ -71,7 +71,7 @@ export default function Workspace() {
               }`}
             >
               Projection
-              {(project.projectionMasks.length > 0 ||
+              {(project.projectionAreas.length > 0 ||
                 project.projectionZones.length > 0 ||
                 project.objectIsolation.enabled ||
                 project.warpSettings.enabled) && (
