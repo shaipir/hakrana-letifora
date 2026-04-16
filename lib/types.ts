@@ -161,6 +161,8 @@ export interface GlowSculptureSettings {
 // Loop settings
 export type LoopMotionType = 'breathe' | 'trace' | 'pulse' | 'flicker' | 'reveal' | 'flow';
 
+export type TransitionMode = 'hard-cut' | 'dissolve' | 'crossfade' | 'morph-blend' | 'optical-flow';
+
 export type BeatDivision = '1/4' | '1/2' | '1' | '2' | '4';
 
 export interface BpmSyncSettings {
@@ -176,6 +178,10 @@ export interface LoopSettings {
   motionIntensity: number;      // 0–1
   motionType: LoopMotionType;
   loopSoftness: number;         // 0–1
+  continuityStrength: number;   // 0–1 — how locked frames are to the previous frame
+  transitionMode: TransitionMode;
+  transitionStrength: number;   // 0–1 — blend amount between frames
+  blendAmount: number;          // 0–1 — dissolve/crossfade opacity
   eyeBlink: boolean;
   breathing: boolean;
   environmentalMotion: boolean;

@@ -87,6 +87,10 @@ export const DEFAULT_LOOP_SETTINGS: LoopSettings = {
   motionIntensity: 0.5,
   motionType: 'breathe',
   loopSoftness: 0.7,
+  continuityStrength: 0.9,
+  transitionMode: 'dissolve',
+  transitionStrength: 0.7,
+  blendAmount: 0.5,
   eyeBlink: false,
   breathing: true,
   environmentalMotion: true,
@@ -144,6 +148,11 @@ function makeDefaultProject(): ArtworkProject {
       loopSettings: {
         ...DEFAULT_LOOP_SETTINGS,
         ...(saved.loopSettings ?? {}),
+        // Ensure new fields are filled in for saved projects that pre-date them
+        continuityStrength: (saved.loopSettings as any)?.continuityStrength ?? DEFAULT_LOOP_SETTINGS.continuityStrength,
+        transitionMode: (saved.loopSettings as any)?.transitionMode ?? DEFAULT_LOOP_SETTINGS.transitionMode,
+        transitionStrength: (saved.loopSettings as any)?.transitionStrength ?? DEFAULT_LOOP_SETTINGS.transitionStrength,
+        blendAmount: (saved.loopSettings as any)?.blendAmount ?? DEFAULT_LOOP_SETTINGS.blendAmount,
         bpmSync: {
           ...DEFAULT_BPM_SYNC,
           ...((saved.loopSettings as any)?.bpmSync ?? {}),

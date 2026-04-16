@@ -250,6 +250,8 @@ export default function CanvasArea() {
             fps={10}
             autoPlay
             bpmSync={project.loopSettings.bpmSync}
+            transitionMode={project.loopSettings.transitionMode}
+            blendAmount={project.loopSettings.blendAmount}
           />
         </div>
       )}

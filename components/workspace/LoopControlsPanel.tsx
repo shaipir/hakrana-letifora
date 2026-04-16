@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, Music, Zap } from 'lucide-react';
 import { useArtReviveStore } from '@/lib/artrevive-store';
-import { LoopMotionType, BeatDivision } from '@/lib/types';
+import { LoopMotionType, BeatDivision, TransitionMode } from '@/lib/types';
 import { BPM_PRESETS, BEAT_DIVISIONS, tapTempoToBpm, bpmToFrameIntervalMs } from '@/lib/bpm-utils';
 
 const MOTION_TYPES: { id: LoopMotionType; label: string; emoji: string }[] = [
@@ -147,6 +147,51 @@ export default function LoopControlsPanel() {
                 className="flex-1 accent-ar-accent h-1" />
               <span className="text-xs text-ar-text-dim w-8 text-right">{Math.round(s.loopSoftness * 100)}%</span>
             </div>
+          </div>
+
+          {/* ── Transition / Continuity ──────────────────────────────── */}
+          <div className="space-y-2">
+            <span className="text-xs text-ar-text-muted block">Transition Mode</span>
+            <div className="grid grid-cols-3 gap-1">
+              {([
+                { value: 'hard-cut',     label: 'Hard Cut' },
+                { value: 'dissolve',     label: 'Dissolve' },
+                { value: 'crossfade',    label: 'Crossfade' },
+                { value: 'morph-blend',  label: 'Morph' },
+                { value: 'optical-flow', label: 'Optical' },
+              ] as { value: TransitionMode; label: string }[]).map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => updateLoopSettings({ transitionMode: value })}
+                  className={`py-1.5 rounded border text-[10px] transition-colors ${
+                    s.transitionMode === value
+                      ? 'bg-ar-accent/20 border-ar-accent/50 text-ar-accent'
+                      : 'border-ar-border text-ar-text-dim hover:text-ar-text'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {s.transitionMode !== 'hard-cut' && (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-ar-text-muted w-32 shrink-0">Blend Amount</span>
+                  <input type="range" min={0} max={1} step={0.05} value={s.blendAmount}
+                    onChange={(e) => updateLoopSettings({ blendAmount: parseFloat(e.target.value) })}
+                    className="flex-1 accent-ar-accent h-1" />
+                  <span className="text-xs text-ar-text-dim w-8 text-right">{Math.round(s.blendAmount * 100)}%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-ar-text-muted w-32 shrink-0">Continuity</span>
+                  <input type="range" min={0} max={1} step={0.05} value={s.continuityStrength}
+                    onChange={(e) => updateLoopSettings({ continuityStrength: parseFloat(e.target.value) })}
+                    className="flex-1 accent-ar-accent h-1" />
+                  <span className="text-xs text-ar-text-dim w-8 text-right">{Math.round(s.continuityStrength * 100)}%</span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Toggles */}
