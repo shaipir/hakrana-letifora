@@ -105,7 +105,12 @@ export default function CanvasArea() {
       {/* Loop player */}
       {source && generatedLoop && generatedLoop.frames.length > 0 && !isLoadingAny && (
         <div className="w-full h-full flex flex-col">
-          <LoopPlayer frames={generatedLoop.frames} fps={10} autoPlay />
+          <LoopPlayer
+            frames={generatedLoop.frames}
+            fps={10}
+            autoPlay
+            bpmSync={project.loopSettings.bpmSync}
+          />
         </div>
       )}
 

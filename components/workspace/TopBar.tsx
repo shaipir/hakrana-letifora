@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { Upload, Zap, Download, RotateCcw, Layers, Settings, X, Eye, EyeOff } from 'lucide-react';
 import { useArtReviveStore } from '@/lib/artrevive-store';
-import { UploadedAsset, GeneratedAsset, GeneratedLoop } from '@/lib/types';
+import { UploadedAsset, GeneratedAsset, GeneratedLoop, GenerationHistoryItem } from '@/lib/types';
 
 const GEMINI_KEY_STORAGE = 'artrevive_gemini_key';
 
@@ -16,7 +16,7 @@ export default function TopBar() {
     setUploadedAsset, setUploading, setUploadError,
     selectedResultId, project: { generatedAssets, loopSettings },
     setGenerating, setGeneratingLoop, setGenerateError, addGeneratedAsset, setGeneratedLoop,
-    setExporting, resetProject, generatedLoop,
+    setExporting, resetProject, generatedLoop, addGenerationHistory,
   } = useArtReviveStore();
 
   const hasImage = !!project.uploadedAsset;
@@ -160,6 +160,15 @@ export default function TopBar() {
           createdAt: new Date().toISOString(),
         };
         setGeneratedLoop(loop);
+        addGenerationHistory({
+          id: crypto.randomUUID(), createdAt: new Date().toISOString(),
+          mode: activeMode, outputType: 'loop',
+          prompt: (settings as any).customStylePrompt ?? '',
+          settingsSnapshot: settings as unknown as Record<string, unknown>,
+          sourceAssetId: project.uploadedAsset.id,
+          resultAssetIds: [],
+          fallbackUsed: json.fallbackUsed ?? false,
+        });
       } catch (err: any) {
         setGenerateError(err?.message ?? 'Loop generation failed');
       } finally {
@@ -193,8 +202,15 @@ export default function TopBar() {
         });
         if (json.fallback) setGenerateError(`⚠ Gemini fallback: ${json.fallbackReason}`);
         const resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
-        addGeneratedAsset({ id: crypto.randomUUID(), url: resultUrl, mode: 'restyle',
+        const assetId = crypto.randomUUID();
+        addGeneratedAsset({ id: assetId, url: resultUrl, mode: 'restyle',
           settings: project.restyleSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
+        addGenerationHistory({ id: crypto.randomUUID(), createdAt: new Date().toISOString(),
+          mode: 'restyle', outputType: 'still',
+          prompt: project.restyleSettings.customStylePrompt,
+          settingsSnapshot: project.restyleSettings as unknown as Record<string, unknown>,
+          sourceAssetId: project.uploadedAsset.id, resultAssetIds: [assetId],
+          fallbackUsed: !!json.fallback });
 
       } else if (activeMode === 'glow-sculpture') {
         const json = await safePost('/api/glow-sculpture', {
@@ -202,8 +218,15 @@ export default function TopBar() {
         });
         if (json.fallback) setGenerateError(`⚠ Gemini fallback: ${json.fallbackReason}`);
         const resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
-        addGeneratedAsset({ id: crypto.randomUUID(), url: resultUrl, mode: 'glow-sculpture',
+        const assetId2 = crypto.randomUUID();
+        addGeneratedAsset({ id: assetId2, url: resultUrl, mode: 'glow-sculpture',
           settings: project.glowSculptureSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
+        addGenerationHistory({ id: crypto.randomUUID(), createdAt: new Date().toISOString(),
+          mode: 'glow-sculpture', outputType: 'still',
+          prompt: project.glowSculptureSettings.customStylePrompt,
+          settingsSnapshot: project.glowSculptureSettings as unknown as Record<string, unknown>,
+          sourceAssetId: project.uploadedAsset.id, resultAssetIds: [assetId2],
+          fallbackUsed: !!json.fallback });
 
       } else if (activeMode === 'house-projection') {
         const json = await safePost('/api/house-projection', {
@@ -211,8 +234,15 @@ export default function TopBar() {
         });
         if (json.fallback) setGenerateError(`⚠ Gemini fallback: ${json.fallbackReason}`);
         const resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
-        addGeneratedAsset({ id: crypto.randomUUID(), url: resultUrl, mode: 'house-projection',
+        const assetId3 = crypto.randomUUID();
+        addGeneratedAsset({ id: assetId3, url: resultUrl, mode: 'house-projection',
           settings: project.houseProjectionSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
+        addGenerationHistory({ id: crypto.randomUUID(), createdAt: new Date().toISOString(),
+          mode: 'house-projection', outputType: 'still',
+          prompt: project.houseProjectionSettings.customStylePrompt,
+          settingsSnapshot: project.houseProjectionSettings as unknown as Record<string, unknown>,
+          sourceAssetId: project.uploadedAsset.id, resultAssetIds: [assetId3],
+          fallbackUsed: !!json.fallback });
       }
     } catch (err: any) {
       setGenerateError(err?.message ?? 'Generation failed');

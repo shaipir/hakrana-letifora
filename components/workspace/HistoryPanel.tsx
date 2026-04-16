@@ -2,10 +2,13 @@
 
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import { GeneratedAsset } from '@/lib/types';
-import { Download, Clock } from 'lucide-react';
+import { Download, Clock, Trash2 } from 'lucide-react';
 
 export default function HistoryPanel() {
-  const { project, selectedResultId, selectResult, setExporting } = useArtReviveStore();
+  const {
+    project, selectedResultId, selectResult,
+    setExporting, removeGeneratedAsset,
+  } = useArtReviveStore();
   const { generatedAssets } = project;
 
   async function downloadAsset(asset: GeneratedAsset) {
@@ -29,11 +32,11 @@ export default function HistoryPanel() {
   }
 
   return (
-    <aside className="w-48 shrink-0 bg-ar-panel border-l border-ar-border flex flex-col overflow-hidden">
+    <aside className="flex flex-col overflow-hidden h-full">
       {/* Header */}
-      <div className="px-3 py-3 border-b border-ar-border flex items-center gap-2">
+      <div className="px-3 py-3 border-b border-ar-border flex items-center gap-2 shrink-0">
         <Clock className="w-3.5 h-3.5 text-ar-text-dim" />
-        <h2 className="text-xs font-semibold tracking-widest uppercase text-ar-text-muted">History</h2>
+        <h2 className="text-xs font-semibold tracking-widest uppercase text-ar-text-muted">Results</h2>
         {generatedAssets.length > 0 && (
           <span className="ml-auto text-xs text-ar-text-dim bg-ar-surface rounded px-1.5 py-0.5">
             {generatedAssets.length}
@@ -88,13 +91,23 @@ export default function HistoryPanel() {
                 </span>
               </div>
 
-              {/* Download on hover */}
-              <button
-                onClick={(e) => { e.stopPropagation(); downloadAsset(asset); }}
-                className="absolute bottom-1 right-1 p-1 rounded bg-black/60 border border-ar-border text-ar-text-muted hover:text-ar-text opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <Download className="w-3 h-3" />
-              </button>
+              {/* Hover actions */}
+              <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={(e) => { e.stopPropagation(); downloadAsset(asset); }}
+                  className="p-1 rounded bg-black/60 border border-ar-border text-ar-text-muted hover:text-ar-text"
+                  title="Download"
+                >
+                  <Download className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); removeGeneratedAsset(asset.id); }}
+                  className="p-1 rounded bg-black/60 border border-ar-border text-ar-text-muted hover:text-ar-neon-pink"
+                  title="Remove"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
 
               {/* Timestamp */}
               <div className="px-2 py-1 bg-ar-panel/80">

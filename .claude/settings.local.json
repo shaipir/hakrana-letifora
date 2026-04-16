@@ -40,7 +40,9 @@
       "Bash(npx skills:*)",
       "Bash(node \"C:/Users/Shai/projects/hakrana-letifora/.claude/worktrees/zealous-nash/.agents/skills/impeccable/scripts/cleanup-deprecated.mjs\")",
       "Bash(gh pr:*)",
-      "mcp__github__create_pull_request"
+      "mcp__github__create_pull_request",
+      "Skill(update-config)",
+      "Skill(update-config:*)"
     ]
   }
 }

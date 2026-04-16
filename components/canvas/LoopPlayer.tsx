@@ -1,36 +1,49 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Play, Pause, RotateCcw, Download } from 'lucide-react';
+import { Play, Pause, RotateCcw, Download, Music } from 'lucide-react';
 import { assembleWebM, assembleGif } from '@/lib/loop/gif-assembler';
+import { BpmSyncSettings } from '@/lib/types';
+import { effectiveFps, bpmToFrameIntervalMs } from '@/lib/bpm-utils';
 
 interface LoopPlayerProps {
   frames: string[];
   fps?: number;
   autoPlay?: boolean;
+  bpmSync?: BpmSyncSettings;
 }
 
-export default function LoopPlayer({ frames, fps = 10, autoPlay = true }: LoopPlayerProps) {
+export default function LoopPlayer({ frames, fps = 10, autoPlay = true, bpmSync }: LoopPlayerProps) {
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [speed, setSpeed] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Compute the actual interval based on BPM sync or manual fps
+  const frameIntervalMs = bpmSync?.enabled
+    ? bpmToFrameIntervalMs(bpmSync.bpm, bpmSync.beatDivision) / speed
+    : (1000 / fps) / speed;
+
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (isPlaying && frames.length > 1) {
       intervalRef.current = setInterval(() => {
         setCurrentFrame((f) => (f + 1) % frames.length);
-      }, (1000 / fps) / speed);
+      }, frameIntervalMs);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [isPlaying, fps, speed, frames.length]);
+  }, [isPlaying, frameIntervalMs, frames.length]);
+
+  // Export uses effective fps derived from BPM or manual
+  const exportFps = bpmSync?.enabled
+    ? effectiveFps(fps, bpmSync) * speed
+    : fps * speed;
 
   async function handleExportWebM() {
     setIsExporting(true);
     try {
-      const url = await assembleWebM(frames, fps * speed);
+      const url = await assembleWebM(frames, exportFps);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'artrevive-loop.webm';
@@ -45,7 +58,7 @@ export default function LoopPlayer({ frames, fps = 10, autoPlay = true }: LoopPl
   async function handleExportGif() {
     setIsExporting(true);
     try {
-      const url = await assembleGif(frames, fps * speed);
+      const url = await assembleGif(frames, exportFps);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'artrevive-loop.gif';
@@ -70,9 +83,17 @@ export default function LoopPlayer({ frames, fps = 10, autoPlay = true }: LoopPl
           className="max-w-full max-h-full object-contain rounded-sm shadow-2xl"
           style={{ maxWidth: '80vw', maxHeight: '65vh', transition: 'opacity 80ms' }}
         />
-        {/* Frame counter badge */}
-        <div className="absolute top-3 right-3 bg-black/60 border border-ar-border rounded px-2 py-0.5 text-xs text-ar-text-muted">
-          {currentFrame + 1}/{frames.length}
+        {/* Frame counter + BPM badge */}
+        <div className="absolute top-3 right-3 flex items-center gap-1.5">
+          {bpmSync?.enabled && (
+            <div className="flex items-center gap-1 bg-ar-accent/20 border border-ar-accent/40 rounded px-2 py-0.5 text-xs text-ar-accent">
+              <Music className="w-3 h-3" />
+              <span>{bpmSync.bpm} BPM</span>
+            </div>
+          )}
+          <div className="bg-black/60 border border-ar-border rounded px-2 py-0.5 text-xs text-ar-text-muted">
+            {currentFrame + 1}/{frames.length}
+          </div>
         </div>
       </div>
 
@@ -105,18 +126,20 @@ export default function LoopPlayer({ frames, fps = 10, autoPlay = true }: LoopPl
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
 
-          {/* Speed */}
-          <div className="flex rounded border border-ar-border overflow-hidden text-xs">
-            {[0.5, 1, 2].map((s) => (
-              <button
-                key={s}
-                onClick={() => setSpeed(s)}
-                className={`px-2 py-1 transition-colors ${speed === s ? 'bg-ar-accent/20 text-ar-accent' : 'text-ar-text-muted hover:text-ar-text'}`}
-              >
-                {s}x
-              </button>
-            ))}
-          </div>
+          {/* Speed multiplier — hidden when BPM sync active (BPM controls timing) */}
+          {!bpmSync?.enabled && (
+            <div className="flex rounded border border-ar-border overflow-hidden text-xs">
+              {[0.5, 1, 2].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSpeed(s)}
+                  className={`px-2 py-1 transition-colors ${speed === s ? 'bg-ar-accent/20 text-ar-accent' : 'text-ar-text-muted hover:text-ar-text'}`}
+                >
+                  {s}x
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Export */}
           <div className="flex gap-1">

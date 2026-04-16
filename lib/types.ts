@@ -159,6 +159,15 @@ export interface GlowSculptureSettings {
 // Loop settings
 export type LoopMotionType = 'breathe' | 'trace' | 'pulse' | 'flicker' | 'reveal' | 'flow';
 
+export type BeatDivision = '1/4' | '1/2' | '1' | '2' | '4';
+
+export interface BpmSyncSettings {
+  enabled: boolean;
+  bpm: number;             // 90–160
+  beatDivision: BeatDivision;
+  motionToBeatStrength: number;  // 0–1
+}
+
 export interface LoopSettings {
   outputMode: 'still' | 'loop';
   frameCount: number;           // default 10
@@ -169,6 +178,84 @@ export interface LoopSettings {
   breathing: boolean;
   environmentalMotion: boolean;
   organicGrowth: boolean;
+  bpmSync: BpmSyncSettings;
+}
+
+// ─── Projection Mask ──────────────────────────────────────────────────────────
+export interface ProjectionMask {
+  id: string;
+  type: 'rectangle' | 'polygon' | 'painted';
+  points: { x: number; y: number }[];
+  feather: number;   // 0–50 px
+  inverted: boolean;
+}
+
+// ─── Object Isolation ─────────────────────────────────────────────────────────
+export interface SelectedObjectRegion {
+  id: string;
+  label?: string;
+  points: { x: number; y: number }[];
+}
+
+export interface ObjectIsolationSettings {
+  enabled: boolean;
+  regions: SelectedObjectRegion[];
+  backgroundMode: 'blackout' | 'darken' | 'hide';
+  darkenAmount: number;  // 0–1
+}
+
+// ─── Projection Zones ─────────────────────────────────────────────────────────
+export interface ProjectionZone {
+  id: string;
+  name: string;
+  maskId?: string;
+  assignedMode?: ArtReviveMode;
+  assignedPreset?: string;
+  visible: boolean;
+  generatedAssetId?: string;
+}
+
+// ─── Warp / Surface Mapping ───────────────────────────────────────────────────
+export interface WarpPoint { x: number; y: number; }
+
+export interface WarpPreset {
+  id: string;
+  name: string;
+  type: 'corner-pin' | 'perspective' | 'mesh';
+  points?: WarpPoint[];
+  meshGrid?: { x: number; y: number }[][];
+}
+
+export interface WarpSettings {
+  enabled: boolean;
+  activePresetId: string | null;
+  presets: WarpPreset[];
+  // Current corner-pin corners (normalized 0–1 relative to canvas)
+  cornerPin: {
+    topLeft: WarpPoint;
+    topRight: WarpPoint;
+    bottomLeft: WarpPoint;
+    bottomRight: WarpPoint;
+  };
+  meshCols: number;
+  meshRows: number;
+  meshGrid: WarpPoint[][] | null;
+  mode: 'corner-pin' | 'perspective' | 'mesh';
+}
+
+// ─── Generation History ───────────────────────────────────────────────────────
+export interface GenerationHistoryItem {
+  id: string;
+  createdAt: string;
+  mode: ArtReviveMode;
+  outputType: 'still' | 'loop';
+  prompt: string;
+  settingsSnapshot: Record<string, unknown>;
+  sourceAssetId?: string;
+  resultAssetIds: string[];
+  provider?: string;
+  model?: string;
+  fallbackUsed?: boolean;
 }
 
 export interface GeneratedLoop {
@@ -229,6 +316,15 @@ export interface ArtworkProject {
   glowSculptureSettings: GlowSculptureSettings;
   houseProjectionSettings: HouseProjectionSettings;
   loopSettings: LoopSettings;
+  // Projection workflow
+  projectionMasks: ProjectionMask[];
+  activeMaskId: string | null;
+  objectIsolation: ObjectIsolationSettings;
+  projectionZones: ProjectionZone[];
+  activeZoneId: string | null;
+  warpSettings: WarpSettings;
+  // History
+  generationHistory: GenerationHistoryItem[];
   createdAt: string;
   updatedAt: string;
 }
