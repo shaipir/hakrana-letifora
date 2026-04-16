@@ -3,8 +3,61 @@
 import { useRef, useState } from 'react';
 import { Upload, Maximize2, Columns2, Layers, Crosshair, Grid, Sun } from 'lucide-react';
 import { useArtReviveStore } from '@/lib/artrevive-store';
-import { UploadedAsset } from '@/lib/types';
+import { UploadedAsset, GridLayout } from '@/lib/types';
 import LoopPlayer from '@/components/canvas/LoopPlayer';
+
+// ─── Grid Face SVG Overlay ─────────────────────────────────────────────────────
+
+function GridFaceOverlay({ gridLayouts, activeGridId }: { gridLayouts: GridLayout[]; activeGridId: string | null }) {
+  const visibleGrids = gridLayouts.filter((g) => g.visible);
+  if (!visibleGrids.length) return null;
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      viewBox="0 0 1 1"
+      preserveAspectRatio="xMidYMid meet"
+      style={{ zIndex: 10 }}
+    >
+      {visibleGrids.map((grid) =>
+        grid.faces.filter((f) => f.visible).map((face) => {
+          const pts = face.points.map((p) => `${p.x},${p.y}`).join(' ');
+          const isActive = grid.id === activeGridId && grid.activeFaceId === face.id;
+          return (
+            <g key={face.id}>
+              <polygon
+                points={pts}
+                fill={face.color}
+                fillOpacity={isActive ? 0.18 : 0.08}
+                stroke={face.color}
+                strokeWidth={isActive ? 0.005 : 0.003}
+                strokeOpacity={isActive ? 0.9 : 0.55}
+                strokeDasharray={isActive ? undefined : '0.015 0.008'}
+              />
+              {/* Face label at centroid */}
+              {face.points.length > 0 && (() => {
+                const cx = face.points.reduce((s, p) => s + p.x, 0) / face.points.length;
+                const cy = face.points.reduce((s, p) => s + p.y, 0) / face.points.length;
+                return (
+                  <text
+                    x={cx} y={cy}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize="0.022"
+                    fill={face.color}
+                    fillOpacity={isActive ? 1 : 0.6}
+                    style={{ fontFamily: 'monospace', pointerEvents: 'none' }}
+                  >
+                    {face.name}
+                  </text>
+                );
+              })()}
+            </g>
+          );
+        })
+      )}
+    </svg>
+  );
+}
 
 type CompareMode = 'single' | 'side-by-side' | 'slider';
 
@@ -15,7 +68,7 @@ export default function CanvasArea() {
     isUploading, uploadError,
     setUploadedAsset, setUploading, setUploadError,
     selectedResultId, generatedLoop,
-    updateReferenceProjection,
+    updateReferenceProjection, setActiveFace,
   } = useArtReviveStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -321,6 +374,13 @@ export default function CanvasArea() {
                     : '0 8px 40px rgba(0,0,0,0.6)',
                 }}
               />
+              {/* Grid face overlay */}
+              {project.gridLayouts.length > 0 && (
+                <GridFaceOverlay
+                  gridLayouts={project.gridLayouts}
+                  activeGridId={project.activeGridId}
+                />
+              )}
               {selectedResult && source && (
                 <button
                   onMouseEnter={() => setShowOriginal(true)}

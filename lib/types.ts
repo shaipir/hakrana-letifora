@@ -334,6 +334,42 @@ export interface GeneratedAsset {
   createdAt: string;
 }
 
+// ─── Multi-layer Grid / Shape Layout ─────────────────────────────────────────
+
+export interface GridFace {
+  id: string;
+  name: string;
+  /** Polygon vertices in normalized 0–1 coords (relative to image bounds) */
+  points: Point[];
+  color: string;          // hex color for UI highlight
+  assignedAssetId: string | null;   // GeneratedAsset.id assigned to this face
+  visible: boolean;
+  solo: boolean;
+  /** Optional per-face warp override */
+  warp: WarpSettings | null;
+}
+
+export interface GridLayout {
+  id: string;
+  name: string;
+  faces: GridFace[];
+  activeFaceId: string | null;
+  /** When true, everything outside defined faces is blacked out */
+  blackoutOutside: boolean;
+  visible: boolean;
+}
+
+export interface ShapeDetectionResult {
+  id: string;
+  label: string;
+  type: string;
+  bbox: { x: number; y: number; width: number; height: number };
+  projectionPotential: number;
+  suggestedStyles: string[];
+}
+
+export type GridDrawMode = 'off' | 'rectangle' | 'polygon';
+
 export interface ArtworkProject {
   id: string;
   name: string;
@@ -356,6 +392,9 @@ export interface ArtworkProject {
   activeZoneId: string | null;
   warpSettings: WarpSettings;
   referenceProjection: ReferenceProjectionSettings;
+  // Grid layout system
+  gridLayouts: GridLayout[];
+  activeGridId: string | null;
   // History
   generationHistory: GenerationHistoryItem[];
   createdAt: string;

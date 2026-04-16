@@ -5,7 +5,7 @@ import {
   LoopSettings, GeneratedLoop,
   BpmSyncSettings, ProjectionArea, ObjectIsolationSettings,
   ProjectionZone, WarpSettings, WarpPreset, GenerationHistoryItem,
-  ReferenceProjectionSettings,
+  ReferenceProjectionSettings, GridLayout, GridFace,
 } from './types';
 import { loadProjectFromStorage, saveProjectToStorage, appendGenerationHistory } from './project-persistence';
 
@@ -139,6 +139,8 @@ function makeDefaultProject(): ArtworkProject {
       activeZoneId: saved.activeZoneId ?? null,
       warpSettings: saved.warpSettings ?? { ...DEFAULT_WARP_SETTINGS },
       referenceProjection: saved.referenceProjection ?? { ...DEFAULT_REFERENCE_PROJECTION },
+      gridLayouts: (saved as any).gridLayouts ?? [],
+      activeGridId: (saved as any).activeGridId ?? null,
       generationHistory: saved.generationHistory ?? [],
       houseProjectionSettings: {
         ...DEFAULT_HOUSE_PROJECTION_SETTINGS,
@@ -178,6 +180,8 @@ function makeDefaultProject(): ArtworkProject {
     activeZoneId: null,
     warpSettings: { ...DEFAULT_WARP_SETTINGS },
     referenceProjection: { ...DEFAULT_REFERENCE_PROJECTION },
+    gridLayouts: [],
+    activeGridId: null,
     generationHistory: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -244,6 +248,17 @@ interface ArtReviveState {
   removeWarpPreset: (id: string) => void;
   applyWarpPreset: (id: string) => void;
   resetWarp: () => void;
+
+  // Grid layouts
+  addGridLayout: (override?: Partial<GridLayout>) => void;
+  updateGridLayout: (id: string, patch: Partial<GridLayout>) => void;
+  removeGridLayout: (id: string) => void;
+  setActiveGrid: (id: string | null) => void;
+  duplicateGridLayout: (id: string) => void;
+  addGridFace: (gridId: string, face?: Partial<GridFace>) => void;
+  updateGridFace: (gridId: string, faceId: string, patch: Partial<GridFace>) => void;
+  removeGridFace: (gridId: string, faceId: string) => void;
+  setActiveFace: (gridId: string, faceId: string | null) => void;
 
   // Generation history
   addGenerationHistory: (item: GenerationHistoryItem) => void;
@@ -581,6 +596,149 @@ export const useArtReviveStore = create<ArtReviveState>((set, get) => ({
       },
     })),
 
+  // ── Grid layouts ────────────────────────────────────────────────────────────
+
+  addGridLayout: (override = {}) => {
+    const count = get().project.gridLayouts.length + 1;
+    const layout: GridLayout = {
+      id: crypto.randomUUID(),
+      name: `Grid ${count}`,
+      faces: [],
+      activeFaceId: null,
+      blackoutOutside: false,
+      visible: true,
+      ...override,
+    };
+    set((s) => ({
+      project: {
+        ...s.project,
+        gridLayouts: [...s.project.gridLayouts, layout],
+        activeGridId: layout.id,
+        updatedAt: new Date().toISOString(),
+      },
+    }));
+  },
+
+  updateGridLayout: (id, patch) =>
+    set((s) => ({
+      project: {
+        ...s.project,
+        gridLayouts: s.project.gridLayouts.map((g) => g.id === id ? { ...g, ...patch } : g),
+        updatedAt: new Date().toISOString(),
+      },
+    })),
+
+  removeGridLayout: (id) =>
+    set((s) => {
+      const remaining = s.project.gridLayouts.filter((g) => g.id !== id);
+      return {
+        project: {
+          ...s.project,
+          gridLayouts: remaining,
+          activeGridId: s.project.activeGridId === id ? (remaining[0]?.id ?? null) : s.project.activeGridId,
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    }),
+
+  setActiveGrid: (id) =>
+    set((s) => ({
+      project: { ...s.project, activeGridId: id, updatedAt: new Date().toISOString() },
+    })),
+
+  duplicateGridLayout: (id) => {
+    const grid = get().project.gridLayouts.find((g) => g.id === id);
+    if (!grid) return;
+    const dupe: GridLayout = {
+      ...grid,
+      id: crypto.randomUUID(),
+      name: `${grid.name} (copy)`,
+      faces: grid.faces.map((f) => ({ ...f, id: crypto.randomUUID() })),
+      activeFaceId: null,
+    };
+    set((s) => ({
+      project: {
+        ...s.project,
+        gridLayouts: [...s.project.gridLayouts, dupe],
+        activeGridId: dupe.id,
+        updatedAt: new Date().toISOString(),
+      },
+    }));
+  },
+
+  addGridFace: (gridId, override = {}) => {
+    const grid = get().project.gridLayouts.find((g) => g.id === gridId);
+    if (!grid) return;
+    const count = grid.faces.length + 1;
+    const FACE_COLORS = ['#00e5ff', '#bf5fff', '#ff6b6b', '#51cf66', '#ffd43b', '#ff922b', '#74c0fc', '#f783ac'];
+    const face: GridFace = {
+      id: crypto.randomUUID(),
+      name: `Face ${count}`,
+      points: [
+        { x: 0.1, y: 0.1 }, { x: 0.4, y: 0.1 },
+        { x: 0.4, y: 0.4 }, { x: 0.1, y: 0.4 },
+      ],
+      color: FACE_COLORS[(grid.faces.length) % FACE_COLORS.length],
+      assignedAssetId: null,
+      visible: true,
+      solo: false,
+      warp: null,
+      ...override,
+    };
+    set((s) => ({
+      project: {
+        ...s.project,
+        gridLayouts: s.project.gridLayouts.map((g) =>
+          g.id === gridId
+            ? { ...g, faces: [...g.faces, face], activeFaceId: face.id }
+            : g
+        ),
+        updatedAt: new Date().toISOString(),
+      },
+    }));
+  },
+
+  updateGridFace: (gridId, faceId, patch) =>
+    set((s) => ({
+      project: {
+        ...s.project,
+        gridLayouts: s.project.gridLayouts.map((g) =>
+          g.id === gridId
+            ? { ...g, faces: g.faces.map((f) => f.id === faceId ? { ...f, ...patch } : f) }
+            : g
+        ),
+        updatedAt: new Date().toISOString(),
+      },
+    })),
+
+  removeGridFace: (gridId, faceId) =>
+    set((s) => ({
+      project: {
+        ...s.project,
+        gridLayouts: s.project.gridLayouts.map((g) =>
+          g.id === gridId
+            ? {
+                ...g,
+                faces: g.faces.filter((f) => f.id !== faceId),
+                activeFaceId: g.activeFaceId === faceId ? null : g.activeFaceId,
+              }
+            : g
+        ),
+        updatedAt: new Date().toISOString(),
+      },
+    })),
+
+  setActiveFace: (gridId, faceId) =>
+    set((s) => ({
+      project: {
+        ...s.project,
+        gridLayouts: s.project.gridLayouts.map((g) =>
+          g.id === gridId ? { ...g, activeFaceId: faceId } : g
+        ),
+        updatedAt: new Date().toISOString(),
+      },
+    })),
+
   // ── Generation history ──────────────────────────────────────────────────────
 
   addGenerationHistory: (item) => {
@@ -636,6 +794,8 @@ export const useArtReviveStore = create<ArtReviveState>((set, get) => ({
       activeZoneId: null,
       warpSettings: { ...DEFAULT_WARP_SETTINGS },
       referenceProjection: { ...DEFAULT_REFERENCE_PROJECTION },
+      gridLayouts: [],
+      activeGridId: null,
       generationHistory: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

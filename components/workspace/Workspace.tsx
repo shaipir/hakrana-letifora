@@ -12,6 +12,7 @@ import CanvasArea from './CanvasArea';
 import HistoryPanel from './HistoryPanel';
 import ProjectionWorkflowPanel from './ProjectionWorkflowPanel';
 import ProjectHistoryPanel from './ProjectHistoryPanel';
+import GridLayoutPanel from './GridLayoutPanel';
 
 type LeftTab = 'settings' | 'projection';
 type RightTab = 'history' | 'generations';
@@ -74,7 +75,8 @@ export default function Workspace() {
               {(project.projectionAreas.length > 0 ||
                 project.projectionZones.length > 0 ||
                 project.objectIsolation.enabled ||
-                project.warpSettings.enabled) && (
+                project.warpSettings.enabled ||
+                project.gridLayouts.length > 0) && (
                 <span className="absolute top-1 right-2 w-1.5 h-1.5 rounded-full bg-ar-accent" />
               )}
             </button>
@@ -89,7 +91,11 @@ export default function Workspace() {
                 ? <GlowSculpturePanel />
                 : <HouseProjectionPanel />
             ) : (
-              <ProjectionWorkflowPanel />
+              <>
+                <ProjectionWorkflowPanel />
+                <div className="border-t border-ar-border/50 mt-1" />
+                <GridLayoutPanel />
+              </>
             )}
           </div>
 
