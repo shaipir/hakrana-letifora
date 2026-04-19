@@ -54,6 +54,31 @@ export default function StylePanel() {
   return (
     <div className="flex flex-col gap-4 p-4 animate-fade-up">
 
+      {/* Character mode — restyle only */}
+      {activeMode === 'restyle' && (
+        <div className="flex rounded-lg border border-ar-border overflow-hidden">
+          {([
+            { id: 'preserve-characters' as const, emoji: '🧬', label: 'Preserve Characters' },
+            { id: 'rebuild-characters'  as const, emoji: '🔮', label: 'Rebuild Characters'  },
+          ]).map((m, i) => (
+            <button
+              key={m.id}
+              onClick={() => updateRestyleSettings({ mode: m.id })}
+              className={[
+                'flex-1 flex flex-col items-center gap-1 py-2.5 px-1 text-[10px] font-medium transition-all duration-200',
+                i === 0 ? 'border-r border-ar-border' : '',
+                rs.mode === m.id
+                  ? 'bg-ar-accent/10 text-ar-accent shadow-[inset_0_-2px_0_rgba(0,229,255,0.5)]'
+                  : 'text-ar-text-muted hover:text-ar-text hover:bg-ar-surface/30',
+              ].join(' ')}
+            >
+              <span className="text-base leading-none">{m.emoji}</span>
+              <span className="leading-tight text-center">{m.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Visual Language — restyle only */}
       {activeMode === 'restyle' && (
         <div>
