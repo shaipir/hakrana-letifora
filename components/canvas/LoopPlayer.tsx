@@ -97,9 +97,10 @@ export default function LoopPlayer({
       {/* Image display — CSS opacity crossfade, no canvas */}
       <div
         className="flex-1 flex items-center justify-center w-full relative"
-        style={{ maxHeight: '65vh' }}
+        style={{ minHeight: '200px', maxHeight: '65vh' }}
       >
-        <div className="relative w-full h-full flex items-center justify-center">
+        {/* Stack all frames, show current via opacity */}
+        <div className="relative" style={{ width: '100%', maxWidth: '80vw', maxHeight: '65vh', aspectRatio: '4/3' }}>
           {frames.map((src, i) => (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -112,9 +113,6 @@ export default function LoopPlayer({
                 transition: transitionDuration > 0
                   ? `opacity ${transitionDuration}ms ease-in-out`
                   : 'none',
-                maxWidth: '80vw',
-                maxHeight: '65vh',
-                margin: 'auto',
               }}
             />
           ))}

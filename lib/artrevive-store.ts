@@ -143,6 +143,16 @@ function makeDefaultProject(): ArtworkProject {
       gridLayouts: (saved as any).gridLayouts ?? [],
       activeGridId: (saved as any).activeGridId ?? null,
       generationHistory: saved.generationHistory ?? [],
+      restyleSettings: {
+        ...DEFAULT_RESTYLE_SETTINGS,
+        ...(saved.restyleSettings ?? {}),
+        mode: (saved.restyleSettings as any)?.mode ?? DEFAULT_RESTYLE_SETTINGS.mode,
+        visualLanguage: (saved.restyleSettings as any)?.visualLanguage ?? DEFAULT_RESTYLE_SETTINGS.visualLanguage,
+      },
+      glowSculptureSettings: {
+        ...DEFAULT_GLOW_SCULPTURE_SETTINGS,
+        ...(saved.glowSculptureSettings ?? {}),
+      },
       houseProjectionSettings: {
         ...DEFAULT_HOUSE_PROJECTION_SETTINGS,
         ...(saved.houseProjectionSettings ?? {}),
