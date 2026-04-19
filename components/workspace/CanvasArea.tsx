@@ -320,33 +320,44 @@ export default function CanvasArea() {
               );
             })}
             {/* Live rect drag */}
-            {projDrag.active && activeArea?.type === 'rectangle' && (() => {
-              const x = Math.min(projDrag.sx, projDrag.cx) * 100;
-              const y = Math.min(projDrag.sy, projDrag.cy) * 100;
-              const w = Math.abs(projDrag.cx - projDrag.sx) * 100;
-              const h = Math.abs(projDrag.cy - projDrag.sy) * 100;
-              const color = activeArea.kind === 'project' ? '#00e5ff' : '#ff2d78';
-              return <rect x={x} y={y} width={w} height={h} fill={`${color}20`} stroke={color} strokeWidth="0.6" strokeDasharray="2 1.5" />;
-            })()}
+            {projDrag.active && activeArea?.type === 'rectangle' && (
+              <rect
+                x={Math.min(projDrag.sx, projDrag.cx) * 100}
+                y={Math.min(projDrag.sy, projDrag.cy) * 100}
+                width={Math.abs(projDrag.cx - projDrag.sx) * 100}
+                height={Math.abs(projDrag.cy - projDrag.sy) * 100}
+                fill={activeArea.kind === 'project' ? '#00e5ff20' : '#ff2d7820'}
+                stroke={activeArea.kind === 'project' ? '#00e5ff' : '#ff2d78'}
+                strokeWidth="0.6" strokeDasharray="2 1.5"
+              />
+            )}
             {/* Live polygon */}
-            {polyPoints.length > 0 && activeArea?.type === 'polygon' && (() => {
-              const color = activeArea.kind === 'project' ? '#00e5ff' : '#ff2d78';
-              const pts = polyPoints.map((p) => `${p.x * 100},${p.y * 100}`).join(' ');
-              return (
-                <>
-                  <polyline points={pts} fill="none" stroke={color} strokeWidth="0.6" strokeDasharray="2 1.5" />
-                  {polyPoints.map((p, i) => (
-                    <circle key={i} cx={p.x * 100} cy={p.y * 100} r={i === 0 ? 1.5 : 0.8} fill={color} opacity={0.8} />
-                  ))}
-                </>
-              );
-            })()}
+            {polyPoints.length > 0 && activeArea?.type === 'polygon' && (
+              <g>
+                <polyline
+                  points={polyPoints.map((p) => `${p.x * 100},${p.y * 100}`).join(' ')}
+                  fill="none"
+                  stroke={activeArea.kind === 'project' ? '#00e5ff' : '#ff2d78'}
+                  strokeWidth="0.6" strokeDasharray="2 1.5"
+                />
+                {polyPoints.map((p, i) => (
+                  <circle key={i} cx={p.x * 100} cy={p.y * 100}
+                    r={i === 0 ? 1.5 : 0.8}
+                    fill={activeArea.kind === 'project' ? '#00e5ff' : '#ff2d78'}
+                    opacity={0.8}
+                  />
+                ))}
+              </g>
+            )}
             {/* Live paint path */}
-            {paintPoints.length > 1 && activeArea?.type === 'painted' && (() => {
-              const color = activeArea.kind === 'project' ? '#00e5ff' : '#ff2d78';
-              const d = paintPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x * 100} ${p.y * 100}`).join(' ') + ' Z';
-              return <path d={d} fill={`${color}20`} stroke={color} strokeWidth="0.5" />;
-            })()}
+            {paintPoints.length > 1 && activeArea?.type === 'painted' && (
+              <path
+                d={paintPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x * 100} ${p.y * 100}`).join(' ') + ' Z'}
+                fill={activeArea.kind === 'project' ? '#00e5ff20' : '#ff2d7820'}
+                stroke={activeArea.kind === 'project' ? '#00e5ff' : '#ff2d78'}
+                strokeWidth="0.5"
+              />
+            )}
           </svg>
         )}
 
