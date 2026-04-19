@@ -54,26 +54,6 @@ export default function StylePanel() {
   return (
     <div className="flex flex-col gap-4 p-4 animate-fade-up">
 
-      {/* World presets — restyle + house */}
-      {activeMode !== 'glow-sculpture' && (
-        <div>
-          <SectionLabel>Style</SectionLabel>
-          <div className="grid grid-cols-5 gap-1">
-            {WORLDS.map((w) => (
-              <PresetCard
-                key={w.id}
-                active={currentPreset === w.id}
-                onClick={() => setPreset(w.id)}
-                accentColor={w.accent}
-              >
-                <span className="text-sm leading-none">{w.emoji}</span>
-                <span className="leading-none">{w.label}</span>
-              </PresetCard>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Visual Language — restyle only */}
       {activeMode === 'restyle' && (
         <div>
@@ -100,6 +80,26 @@ export default function StylePanel() {
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* World presets — restyle + house */}
+      {activeMode !== 'glow-sculpture' && (
+        <div>
+          <SectionLabel>World Style</SectionLabel>
+          <div className="grid grid-cols-5 gap-1">
+            {WORLDS.map((w) => (
+              <PresetCard
+                key={w.id}
+                active={currentPreset === w.id}
+                onClick={() => setPreset(w.id)}
+                accentColor={w.accent}
+              >
+                <span className="text-sm leading-none">{w.emoji}</span>
+                <span className="leading-none">{w.label}</span>
+              </PresetCard>
+            ))}
           </div>
         </div>
       )}
