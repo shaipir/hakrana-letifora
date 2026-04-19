@@ -188,18 +188,32 @@ function buildLoopClosePrompt(
   worldPreset: WorldPreset | null,
   mode: ArtReviveMode,
 ): string {
+  const isProjectionMode = mode === 'house-projection';
+
+  const closureBlock = isProjectionMode
+    ? [
+        `ANIMATION FRAME ${totalFrames} OF ${totalFrames} — SEAMLESS LOOP CLOSURE.`,
+        `The input image is FRAME 1 (the opening state of the loop).`,
+        `OBJECT LOCK: The building/object is FROZEN — same shape, position, silhouette, camera angle as frame 1. Zero movement.`,
+        `The background is also FROZEN — identical to frame 1.`,
+        `Your task: produce a projection light state that naturally bridges back to the opening projection artwork.`,
+        `The projected light on the object should match the energy level and visual feel of frame 1's projection.`,
+        `This makes the projection loop seamless — the light art cycles endlessly on the frozen structure.`,
+      ].join(' ')
+    : [
+        `ANIMATION FRAME ${totalFrames} OF ${totalFrames} — SEAMLESS LOOP CLOSURE.`,
+        `The input image is FRAME 1 (the opening state of the loop).`,
+        `Your task: produce a frame that visually bridges the gap between the previous frame and this opening state.`,
+        `The result must feel like a natural transition BACK TO the beginning so the loop plays seamlessly.`,
+        `Match the exact composition, subject, lighting mood, and world-style of the input (frame 1).`,
+        `Only the world-animation energy level should be slightly lower / returning to the resting opening state.`,
+        `Do NOT introduce any new elements. Do NOT change the subject or composition.`,
+        `This frame must make the loop feel like it never ends — continuous, smooth, infinite.`,
+      ].join(' ');
+
   return [
     basePrompt,
-    [
-      `ANIMATION FRAME ${totalFrames} OF ${totalFrames} — SEAMLESS LOOP CLOSURE.`,
-      `The input image is FRAME 1 (the opening state of the loop).`,
-      `Your task: produce a frame that visually bridges the gap between the previous frame and this opening state.`,
-      `The result must feel like a natural transition BACK TO the beginning so the loop plays seamlessly.`,
-      `Match the exact composition, subject, lighting mood, and world-style of the input (frame 1).`,
-      `Only the world-animation energy level should be slightly lower / returning to the resting opening state.`,
-      `Do NOT introduce any new elements. Do NOT change the subject or composition.`,
-      `This frame must make the loop feel like it never ends — continuous, smooth, infinite.`,
-    ].join(' '),
+    closureBlock,
     `Loop softness ${Math.round(loopSettings.loopSoftness * 100)}% — maximum visual continuity required.`,
     worldPreset ? `World style returning to opening resting state of the ${worldPreset} world.` : '',
   ].filter(Boolean).join('\n\n');

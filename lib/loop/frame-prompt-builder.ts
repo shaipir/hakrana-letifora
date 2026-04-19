@@ -187,22 +187,39 @@ export function buildFrameMotionPrompt(
     loopSettings.organicGrowth && worldPreset ? `organic growth energy from ${worldPreset} world continues progressing` : '',
   ].filter(Boolean).join(', ');
 
+  const isProjectionMode = mode === 'house-projection';
+
   const continuityBlock = isFirstFrame
     ? [
         `ANIMATION FRAME 1 OF ${totalFrames} — OPENING STATE.`,
         `This is the FIRST frame of a short coherent animated shot.`,
         `Establish the scene clearly. Subject, composition, lighting, and world-style must be exactly as defined above.`,
         `This frame is the visual anchor — all subsequent frames will evolve from this exact state.`,
-      ].join(' ')
+        isProjectionMode
+          ? `PROJECTION MODE: The object/building is the static canvas — it does NOT move. Only the projected light on its surface animates.`
+          : '',
+      ].filter(Boolean).join(' ')
     : [
         `ANIMATION FRAME ${frameIndex + 1} OF ${totalFrames} — CONTINUATION.`,
         `CRITICAL: This frame is a DIRECT CONTINUATION of frame ${frameIndex}.`,
         `The input image IS frame ${frameIndex}. You are producing the next moment in the same scene.`,
-        `Preserve ${continuityLevel}% structural continuity: same subject, same identity, same silhouette, same face, same pose base, same composition, same object boundaries.`,
-        `Only the motion state and world-specific animation advances. Nothing else changes.`,
-        `Do NOT drift the subject. Do NOT change the composition. Do NOT introduce new elements.`,
-        `Frame ${frameIndex + 1} must feel like the next video frame of the exact same scene — not a re-generation.`,
-      ].join(' ');
+        isProjectionMode
+          ? [
+              `OBJECT LOCK — ABSOLUTE RULE: The building/object structure is COMPLETELY FROZEN.`,
+              `Its shape, silhouette, position, camera angle, and all physical geometry are IDENTICAL to the input.`,
+              `The object does NOT move, rotate, shift, or deform by even one pixel.`,
+              `The background is also FROZEN — pixel-identical to the input.`,
+              `ONLY the projected light artwork on the object's surfaces changes between frames.`,
+              `The projection light must look clearly separate from the object's real surface — glowing on top, not replacing the material.`,
+              `Make the projection artwork distinctly DIFFERENT from the previous frame — varied colors, patterns, or phase of the world animation — while the object stays perfectly still.`,
+            ].join(' ')
+          : [
+              `Preserve ${continuityLevel}% structural continuity: same subject, same identity, same silhouette, same face, same pose base, same composition, same object boundaries.`,
+              `Only the motion state and world-specific animation advances. Nothing else changes.`,
+              `Do NOT drift the subject. Do NOT change the composition. Do NOT introduce new elements.`,
+              `Frame ${frameIndex + 1} must feel like the next video frame of the exact same scene — not a re-generation.`,
+            ].join(' '),
+      ].filter(Boolean).join(' ');
 
   const progressionBlock = progressionStep
     ? `World motion progression step: ${progressionStep}.`

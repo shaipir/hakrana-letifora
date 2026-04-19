@@ -54,13 +54,31 @@ Apply the projection artwork EXCLUSIVELY on the identified central object.
 ${worldDesc ? `Projection world style: ${worldDesc}.` : ''}
 ${settings.customStylePrompt.trim() ? `Additional direction: ${settings.customStylePrompt.trim()}.` : ''}
 
-STRICT RULES:
-• ONLY the central object receives the projection — background stays untouched
-• Background, floor, sky, surrounding elements remain as in the original photo
-• The projected artwork must align perfectly to the object's geometry and perspective
-• Each face of the object gets its own projection panel — like a real 3D projection mapping show
-• The object's silhouette, edges, and corners must remain sharp and visible
-• The result looks like professional projection mapping light art running on the real central object
+STRICT RULES — READ CAREFULLY:
+
+OBJECT LOCK (most important):
+• The central object is COMPLETELY FROZEN — zero movement, zero deformation, zero shape change
+• The object's silhouette, edges, corners, proportions, and 3D structure are IDENTICAL to the input photo
+• The object does NOT rotate, shift, scale, lean, or morph in ANY way
+• Camera angle and composition are IDENTICAL to the input — no camera drift, no zoom
+• Background, floor, sky, surrounding elements are PIXEL-IDENTICAL to the original photo
+
+PROJECTION SEPARATION (critical visual goal):
+• The projected light must be clearly distinguishable FROM the object's own surface
+• Render projected artwork as glowing LIGHT PAINTED ON TOP of the object's real surface texture
+• The object's real surface material (stone, concrete, brick, metal) must remain VISIBLE UNDERNEATH the projection
+• Projection light does NOT replace the surface — it layers over it, like a real projector beam
+• Object edges should have a subtle dark rim/gap that separates the projection glow from the surrounding darkness
+• This creates the visual illusion of a real projection mapping performance on a physical structure
+
+PROJECTION CONTENT (what changes):
+• ONLY the light pattern, color, glow intensity, and artistic motif projected onto the object changes
+• The projection itself should be VIVID, VARIED, and DYNAMIC — rich with the world's visual language
+• Each face/panel of the object can show a different phase or composition of the projected artwork
+• ${worldDesc ? `Projection world style: ${worldDesc}.` : ''}
+• ${settings.customStylePrompt.trim() ? `Additional direction: ${settings.customStylePrompt.trim()}.` : ''}
+
+TECHNICAL:
 • Surface transformation intensity: ${Math.round(settings.surfaceTransformationStrength * 100)}%
 • Projection light intensity: ${Math.round(settings.projectionIntensity * 100)}%
 • Glow emission: ${Math.round(settings.glowAmount * 100)}%
@@ -68,7 +86,7 @@ STRICT RULES:
 • Detail density: ${Math.round(settings.ornamentationLevel * 100)}%
 • Dark or night atmosphere preferred for maximum projection visibility
 
-Output: photorealistic, cinematic, high-detail. Projection mapping on central object only.
+Output: photorealistic, cinematic, high-detail. Frozen object. Living light projection on its surfaces.
 ====================================================
 `.trim();
 
