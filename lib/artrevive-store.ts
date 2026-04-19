@@ -5,7 +5,7 @@ import {
   LoopSettings, GeneratedLoop,
   BpmSyncSettings, ProjectionArea, ObjectIsolationSettings,
   ProjectionZone, WarpSettings, WarpPreset, GenerationHistoryItem,
-  ReferenceProjectionSettings, GridLayout, GridFace,
+  ReferenceProjectionSettings, GridLayout, GridFace, SelectedRegion,
 } from './types';
 import { loadProjectFromStorage, saveProjectToStorage, appendGenerationHistory } from './project-persistence';
 
@@ -139,6 +139,7 @@ function makeDefaultProject(): ArtworkProject {
       activeZoneId: saved.activeZoneId ?? null,
       warpSettings: saved.warpSettings ?? { ...DEFAULT_WARP_SETTINGS },
       referenceProjection: saved.referenceProjection ?? { ...DEFAULT_REFERENCE_PROJECTION },
+      selectedRegion: (saved as any).selectedRegion ?? null,
       gridLayouts: (saved as any).gridLayouts ?? [],
       activeGridId: (saved as any).activeGridId ?? null,
       generationHistory: saved.generationHistory ?? [],
@@ -180,6 +181,7 @@ function makeDefaultProject(): ArtworkProject {
     activeZoneId: null,
     warpSettings: { ...DEFAULT_WARP_SETTINGS },
     referenceProjection: { ...DEFAULT_REFERENCE_PROJECTION },
+    selectedRegion: null,
     gridLayouts: [],
     activeGridId: null,
     generationHistory: [],
@@ -250,6 +252,9 @@ interface ArtReviveState {
   removeWarpPreset: (id: string) => void;
   applyWarpPreset: (id: string) => void;
   resetWarp: () => void;
+
+  // Selection mask
+  setSelectedRegion: (region: SelectedRegion | null) => void;
 
   // Grid layouts
   addGridLayout: (override?: Partial<GridLayout>) => void;
@@ -600,6 +605,13 @@ export const useArtReviveStore = create<ArtReviveState>((set, get) => ({
       },
     })),
 
+  // ── Selection mask ──────────────────────────────────────────────────────────
+
+  setSelectedRegion: (region) =>
+    set((s) => ({
+      project: { ...s.project, selectedRegion: region, updatedAt: new Date().toISOString() },
+    })),
+
   // ── Grid layouts ────────────────────────────────────────────────────────────
 
   addGridLayout: (override = {}) => {
@@ -798,6 +810,7 @@ export const useArtReviveStore = create<ArtReviveState>((set, get) => ({
       activeZoneId: null,
       warpSettings: { ...DEFAULT_WARP_SETTINGS },
       referenceProjection: { ...DEFAULT_REFERENCE_PROJECTION },
+      selectedRegion: null,
       gridLayouts: [],
       activeGridId: null,
       generationHistory: [],

@@ -66,6 +66,34 @@ export default function TopBar() {
     finally { setUploading(false); }
   }
 
+  /** Crop image to normalized region then resize */
+  function cropAndResizeForApi(
+    dataUrl: string,
+    region: { x: number; y: number; width: number; height: number } | null,
+    maxPx: number,
+  ): Promise<{ base64: string; mimeType: string }> {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const srcX = region ? Math.round(region.x * img.naturalWidth) : 0;
+        const srcY = region ? Math.round(region.y * img.naturalHeight) : 0;
+        const srcW = region ? Math.round(region.width * img.naturalWidth) : img.naturalWidth;
+        const srcH = region ? Math.round(region.height * img.naturalHeight) : img.naturalHeight;
+        const scale = Math.min(1, maxPx / Math.max(srcW, srcH));
+        const dstW = Math.round(srcW * scale);
+        const dstH = Math.round(srcH * scale);
+        const cv = document.createElement('canvas');
+        cv.width = dstW; cv.height = dstH;
+        cv.getContext('2d')!.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, dstW, dstH);
+        const resized = cv.toDataURL('image/jpeg', 0.85);
+        const comma = resized.indexOf(',');
+        resolve({ base64: resized.slice(comma + 1), mimeType: 'image/jpeg' });
+      };
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+  }
+
   function resizeImageForApi(dataUrl: string, maxPx: number): Promise<{ base64: string; mimeType: string }> {
     return new Promise((resolve, reject) => {
       const img = new window.Image();
@@ -120,7 +148,7 @@ export default function TopBar() {
       setGenerateError(null);
       setGeneratedLoop(null);
       try {
-        const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1024);
+        const { base64: imageBase64, mimeType } = await cropAndResizeForApi(project.uploadedAsset.url, project.selectedRegion ?? null, 1024);
         const settings = activeMode === 'restyle'
           ? project.restyleSettings
           : activeMode === 'glow-sculpture'
@@ -183,7 +211,7 @@ export default function TopBar() {
     setGenerateError(null);
     setGeneratedLoop(null);  // clear loop so still image is visible
     try {
-      const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1024);
+      const { base64: imageBase64, mimeType } = await cropAndResizeForApi(project.uploadedAsset.url, project.selectedRegion ?? null, 1024);
 
       async function safePost(url: string, body: object) {
         const res = await fetch(url, {

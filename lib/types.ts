@@ -370,6 +370,12 @@ export interface ShapeDetectionResult {
 
 export type GridDrawMode = 'off' | 'rectangle' | 'polygon';
 
+/** Normalized (0–1) selection rectangle drawn on the source image */
+export interface SelectedRegion {
+  x: number; y: number;
+  width: number; height: number;
+}
+
 export interface ArtworkProject {
   id: string;
   name: string;
@@ -392,6 +398,8 @@ export interface ArtworkProject {
   activeZoneId: string | null;
   warpSettings: WarpSettings;
   referenceProjection: ReferenceProjectionSettings;
+  // Selection mask
+  selectedRegion: SelectedRegion | null;
   // Grid layout system
   gridLayouts: GridLayout[];
   activeGridId: string | null;

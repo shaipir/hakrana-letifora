@@ -4,9 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import { saveProjectToStorage } from '@/lib/project-persistence';
 import TopBar from './TopBar';
-import RestylePanel from './RestylePanel';
-import GlowSculpturePanel from './GlowSculpturePanel';
-import HouseProjectionPanel from './HouseProjectionPanel';
+import StylePanel from './StylePanel';
 import LoopControlsPanel from './LoopControlsPanel';
 import CanvasArea from './CanvasArea';
 import HistoryPanel from './HistoryPanel';
@@ -109,11 +107,7 @@ export default function Workspace() {
           {/* Panel content */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden">
             {leftTab === 'settings' ? (
-              activeMode === 'restyle'
-                ? <RestylePanel />
-                : activeMode === 'glow-sculpture'
-                ? <GlowSculpturePanel />
-                : <HouseProjectionPanel />
+              <StylePanel />
             ) : (
               <>
                 <ProjectionWorkflowPanel />
