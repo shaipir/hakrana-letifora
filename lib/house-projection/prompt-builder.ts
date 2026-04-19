@@ -1,22 +1,22 @@
 /**
- * House Projection Transform Prompt Builder
- * Builds facade-aligned projection art prompts.
- * RULE: Must always use the uploaded photo as the real contour base.
+ * Surface Projection Prompt Builder
+ * Detects all surfaces in ANY uploaded image and applies
+ * projection-mapping artwork on them at their correct angles.
  */
 
 import { HouseProjectionSettings, HouseWorldPreset } from '../types';
 
 const WORLD_DESCRIPTIONS: Record<HouseWorldPreset, string> = {
-  forest: 'enchanted forest projection — glowing roots crawling along walls, moss textures filling facade panels, spore-light drifting from windows, bark-skin surfaces, vine networks tracing rooflines, soft green woodland glow',
-  sea: 'underwater coral projection — bioluminescent coral textures on walls, seaweed trailing from windows, bubble streams rising along facade, shell-like ornamentation on doors and trim, deep teal and cyan glow emanating from building surfaces',
-  fire: 'fire temple projection — molten crack textures across facade planes, amber and red ember glow from windows, smoke rising from roofline, lava-like surface channels tracing structural lines, volcanic light emanating from interior',
-  spirit: 'spirit world projection — cold spectral light emanating from windows, ghostly smoke tracing wall planes, translucent energy patterns mapped to facade, pale blue and white ethereal glow, supernatural atmospheric haze',
-  cartoon: 'vibrant cartoon fantasy projection — bold illustrated outlines traced along facade edges, vivid painted flat-color surface panels, playful animated texture fills on walls, exaggerated light and shadow, dynamic cartoon world aesthetic',
-  ice: 'ice crystal projection — frost crystal formations on wall panels, icy blue-white glow from windows, crystalline lattice patterns mapped to facade, frozen surface textures, glacial cold-light atmosphere emanating from building',
-  crystal: 'crystal palace projection — prismatic gem textures on facade panels, rainbow light dispersion from windows, jewel-like surface patterns, refractive iridescent materials mapped to walls, radiant inner light emanating from building',
-  shadow: 'shadow realm projection — deep darkness with violet energy lines tracing structural edges, near-black facade with spectral purple glow from windows, void-like surface panels with dark energy patterns, ominous high-contrast atmosphere',
-  floral: 'living floral projection — petal and bloom textures mapped to wall panels, soft magical glow from floral patterns on facade, vines and blossoms tracing structural lines, warm dreamlike botanical light emanating from windows',
-  machine: 'machine world projection — glowing circuit patterns mapped to facade panels, terminal green scanning light on walls, mechanical joint textures at structural corners, grid-like ornamentation on surfaces, technological glow from building',
+  forest:  'enchanted forest — glowing roots, moss textures, spore-light, bark surfaces, vine networks, soft green woodland glow',
+  sea:     'underwater coral — bioluminescent coral textures, seaweed, bubble streams, shell ornamentation, deep teal and cyan glow',
+  fire:    'fire temple — molten crack textures, amber and red ember glow, smoke, lava-like surface channels, volcanic light',
+  spirit:  'spirit world — cold spectral light, ghostly smoke, translucent energy patterns, pale blue and white ethereal glow',
+  cartoon: 'vibrant cartoon fantasy — bold illustrated outlines along edges, vivid flat-color fills, playful animated textures, dynamic cartoon aesthetic',
+  ice:     'ice crystal — frost crystal formations, icy blue-white glow, crystalline lattice patterns, frozen surface textures, glacial cold-light',
+  crystal: 'crystal palace — prismatic gem textures, rainbow light dispersion, jewel-like surface patterns, refractive iridescent materials',
+  shadow:  'shadow realm — deep darkness with violet energy lines tracing edges, near-black with spectral purple glow, void-like panels with dark energy',
+  floral:  'living floral — petal and bloom textures mapped to surfaces, soft magical glow, vines and blossoms tracing structural lines, warm dreamlike botanical light',
+  machine: 'machine world — glowing circuit patterns, terminal green scanning light, mechanical joint textures, grid-like ornamentation, technological glow',
 };
 
 export interface HouseBuiltPrompt {
@@ -31,61 +31,62 @@ export interface HouseBuiltPrompt {
 export function buildHouseProjectionPrompt(settings: HouseProjectionSettings): HouseBuiltPrompt {
   const worldDesc = settings.worldPreset ? WORLD_DESCRIPTIONS[settings.worldPreset] : null;
 
-  // ── Rule: use the uploaded photo as the EXACT structural skeleton ────────────
-  const photoContourBlock = [
-    '====== CRITICAL STRUCTURAL RULE — READ FIRST ======',
-    'This prompt uses the uploaded photograph as the FIXED structural and geometric base.',
-    'You MUST work directly on top of the photographed building.',
-    'The photographed building IS the final building. Do NOT replace it with a different building.',
-    'Do NOT invent a new house, facade, or structure.',
-    'Do NOT generate a fantasy building that happens to look similar.',
-    'The real-world building in the photo must be VISUALLY RECOGNIZABLE in the output.',
+  const surfaceDetectionBlock = [
+    '====== SURFACE PROJECTION MAPPING — READ FIRST ======',
+    'STEP 1 — SURFACE DETECTION:',
+    'Analyze the uploaded image and identify ALL visible surfaces:',
+    '• Architectural surfaces: walls, floors, ceilings, stairs, doors, windows, columns',
+    '• Furniture: tables, chairs, shelves, counters, cabinets — each flat or angled face',
+    '• Objects: any object with a visible flat or curved surface area',
+    '• Characters or figures: body planes, clothing surfaces, visible skin planes',
+    '• Natural surfaces: ground, rock, tree bark, water, grass planes',
+    '',
+    'STEP 2 — PERSPECTIVE-CORRECT PROJECTION:',
+    'For EACH detected surface:',
+    '• Respect the exact 3D angle, tilt, and perspective of that surface as it appears in the photo',
+    '• Apply the projection artwork in correct perspective — surfaces at an angle get foreshortened artwork',
+    '• Table surfaces get artwork viewed at the table\'s angle',
+    '• Walls get artwork aligned to the wall plane',
+    '• Curved objects get artwork wrapped around their contour',
+    '• Characters/figures get artwork projected onto their body planes',
+    '',
+    'STEP 3 — PRESERVE THE ORIGINAL SCENE:',
+    'Do NOT replace the scene with a fantasy world.',
+    'Do NOT invent new objects or change the composition.',
+    'Keep ALL original objects, people, furniture exactly where they are.',
+    'The result must look like real projectors shining light patterns ONTO the existing surfaces.',
     '====================================================',
-  ].join(' ');
+  ].join('\n');
 
-  const preservationBlock = [
-    `Preserve the exact roofline shape, pitch, and silhouette of the photographed building with ${Math.round(settings.geometryPreservation * 100)}% fidelity.`,
-    `Preserve the facade layout, wall planes, corners, and building footprint with ${Math.round(settings.facadePreservation * 100)}% fidelity.`,
-    `Preserve the exact window positions, sizes, and door openings with ${Math.round(settings.windowAlignmentPreservation * 100)}% fidelity.`,
-    'Window and door openings must remain in exactly the same position as the photograph.',
-    'The architectural silhouette must be pixel-accurate to the uploaded photo.',
-    'Preserve the original camera perspective, angle, and scale of the photographed building.',
-    'Preserve all visible architectural details: balconies, ledges, cornices, dormers, chimneys, columns.',
-    'Use the photo contours as projection mapping guides — every surface in the photo gets a matching transformed surface.',
-  ].join(' ');
-
-  const transformationBlock = [
-    'Now apply high-end projection-mapping artwork on top of the real building structure.',
-    worldDesc ? `Projection world style: ${worldDesc}.` : '',
+  const projectionStyleBlock = [
+    'PROJECTION STYLE TO APPLY ON ALL SURFACES:',
+    worldDesc ? `World: ${worldDesc}.` : '',
     settings.customStylePrompt.trim() ? `Additional direction: ${settings.customStylePrompt.trim()}.` : '',
-    `Surface transformation strength: ${Math.round(settings.surfaceTransformationStrength * 100)}%.`,
-    `Projection intensity and luminosity: ${Math.round(settings.projectionIntensity * 100)}%.`,
-    `Glow and light emission: ${Math.round(settings.glowAmount * 100)}%.`,
+    `Surface transformation intensity: ${Math.round(settings.surfaceTransformationStrength * 100)}%.`,
+    `Projection light intensity and luminosity: ${Math.round(settings.projectionIntensity * 100)}%.`,
+    `Glow and light emission from projected elements: ${Math.round(settings.glowAmount * 100)}%.`,
     `Darkness and contrast depth: ${Math.round(settings.darknessContrast * 100)}%.`,
-    `Ornamentation and surface detail density: ${Math.round(settings.ornamentationLevel * 100)}%.`,
+    `Surface detail and ornamentation density: ${Math.round(settings.ornamentationLevel * 100)}%.`,
     `Atmospheric mood strength: ${Math.round(settings.atmosphereStrength * 100)}%.`,
   ].filter(Boolean).join(' ');
 
-  const projectionBlock = [
-    'Each visible surface of the photographed house is a mapped projection plane.',
-    'Wall panels, window surrounds, roof sections, and structural edges receive precisely aligned surface transformation.',
-    'Internal glow, patterns, and light emanate naturally from the structural openings as they exist in the photo.',
-    'All artistic effects must be spatially coherent with the real photographed architecture.',
-    'The result must look like a professional projection-mapping art installation running on the REAL house from the photo.',
-    'Night or dark-sky atmosphere preferred — projection effect is strongest.',
-    'NOT a concept art of a fantasy building. NOT a different house.',
-    'The photographed house WITH a projected luminous world applied to its real surfaces.',
+  const qualityBlock = [
+    'QUALITY RULES:',
+    '• Every major surface in the frame must receive projection artwork',
+    '• Artwork perspective must match the surface angle exactly — no flat 2D stickers',
+    '• Projection light blends naturally with shadows and ambient light of the scene',
+    '• Small surfaces (a cup, a phone) also get micro-projected patterns scaled to their size',
+    '• The overall result looks like a professional multi-projector installation on the REAL photographed scene',
+    '• Dark or night lighting preferred to make projection effects most visible',
+    'Output: photorealistic, high-detail, cinematic projection-mapping aesthetic.',
   ].join(' ');
 
   const transformPrompt = [
-    photoContourBlock,
+    surfaceDetectionBlock,
     '\n\n',
-    preservationBlock,
+    projectionStyleBlock,
     '\n\n',
-    transformationBlock,
-    '\n\n',
-    projectionBlock,
-    '\n\nOutput: photorealistic, high-detail, cinematic. Projection-mapping aesthetic. Real building contours intact.',
+    qualityBlock,
   ].join('');
 
   return {

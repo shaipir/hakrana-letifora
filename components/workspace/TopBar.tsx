@@ -330,7 +330,7 @@ export default function TopBar() {
           {([
             { id: 'restyle',          label: 'World Transform' },
             { id: 'glow-sculpture',   label: 'Glow Sculpture' },
-            { id: 'house-projection', label: 'House Projection' },
+            { id: 'house-projection', label: 'Surface Projection' },
           ] as const).map((m, i, arr) => (
             <button
               key={m.id}
