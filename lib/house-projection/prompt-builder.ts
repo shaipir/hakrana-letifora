@@ -1,7 +1,6 @@
 /**
  * Surface Projection Prompt Builder
- * Detects all surfaces in ANY uploaded image and applies
- * projection-mapping artwork on them at their correct angles.
+ * Identifies the central object in the image and projects artwork onto it only.
  */
 
 import { HouseProjectionSettings, HouseWorldPreset } from '../types';
@@ -31,63 +30,47 @@ export interface HouseBuiltPrompt {
 export function buildHouseProjectionPrompt(settings: HouseProjectionSettings): HouseBuiltPrompt {
   const worldDesc = settings.worldPreset ? WORLD_DESCRIPTIONS[settings.worldPreset] : null;
 
-  const surfaceDetectionBlock = [
-    '====== SURFACE PROJECTION MAPPING — READ FIRST ======',
-    'STEP 1 — SURFACE DETECTION:',
-    'Analyze the uploaded image and identify ALL visible surfaces:',
-    '• Architectural surfaces: walls, floors, ceilings, stairs, doors, windows, columns',
-    '• Furniture: tables, chairs, shelves, counters, cabinets — each flat or angled face',
-    '• Objects: any object with a visible flat or curved surface area',
-    '• Characters or figures: body planes, clothing surfaces, visible skin planes',
-    '• Natural surfaces: ground, rock, tree bark, water, grass planes',
-    '',
-    'STEP 2 — PERSPECTIVE-CORRECT PROJECTION:',
-    'For EACH detected surface:',
-    '• Respect the exact 3D angle, tilt, and perspective of that surface as it appears in the photo',
-    '• Apply the projection artwork in correct perspective — surfaces at an angle get foreshortened artwork',
-    '• Table surfaces get artwork viewed at the table\'s angle',
-    '• Walls get artwork aligned to the wall plane',
-    '• Curved objects get artwork wrapped around their contour',
-    '• Characters/figures get artwork projected onto their body planes',
-    '',
-    'STEP 3 — PRESERVE THE ORIGINAL SCENE:',
-    'Do NOT replace the scene with a fantasy world.',
-    'Do NOT invent new objects or change the composition.',
-    'Keep ALL original objects, people, furniture exactly where they are.',
-    'The result must look like real projectors shining light patterns ONTO the existing surfaces.',
-    '====================================================',
-  ].join('\n');
+  const transformPrompt = `
+====== SURFACE PROJECTION MAPPING INSTRUCTIONS ======
 
-  const projectionStyleBlock = [
-    'PROJECTION STYLE TO APPLY ON ALL SURFACES:',
-    worldDesc ? `World: ${worldDesc}.` : '',
-    settings.customStylePrompt.trim() ? `Additional direction: ${settings.customStylePrompt.trim()}.` : '',
-    `Surface transformation intensity: ${Math.round(settings.surfaceTransformationStrength * 100)}%.`,
-    `Projection light intensity and luminosity: ${Math.round(settings.projectionIntensity * 100)}%.`,
-    `Glow and light emission from projected elements: ${Math.round(settings.glowAmount * 100)}%.`,
-    `Darkness and contrast depth: ${Math.round(settings.darknessContrast * 100)}%.`,
-    `Surface detail and ornamentation density: ${Math.round(settings.ornamentationLevel * 100)}%.`,
-    `Atmospheric mood strength: ${Math.round(settings.atmosphereStrength * 100)}%.`,
-  ].filter(Boolean).join(' ');
+STEP 1 — IDENTIFY THE CENTRAL SUBJECT:
+Look at the uploaded image and identify the PRIMARY central object or structure.
+This is typically the most prominent element at or near the center of the frame:
+• A building or architectural structure
+• A box, crate, container, or geometric shape
+• A sculpture, statue, or large object
+• Any dominant 3D form that fills the center of the composition
 
-  const qualityBlock = [
-    'QUALITY RULES:',
-    '• Every major surface in the frame must receive projection artwork',
-    '• Artwork perspective must match the surface angle exactly — no flat 2D stickers',
-    '• Projection light blends naturally with shadows and ambient light of the scene',
-    '• Small surfaces (a cup, a phone) also get micro-projected patterns scaled to their size',
-    '• The overall result looks like a professional multi-projector installation on the REAL photographed scene',
-    '• Dark or night lighting preferred to make projection effects most visible',
-    'Output: photorealistic, high-detail, cinematic projection-mapping aesthetic.',
-  ].join(' ');
+STEP 2 — MAP ITS SURFACES:
+For the central object ONLY, identify each visible face/surface:
+• Each flat plane (front face, side face, top face)
+• Respect the exact perspective and 3D angle of each face as seen in the photo
+• A box has up to 3 visible faces — map each one separately
+• A building has a facade, side walls, roofline — map each plane
+• Respect foreshortening: angled surfaces get perspective-correct artwork
 
-  const transformPrompt = [
-    surfaceDetectionBlock,
-    '\n\n',
-    projectionStyleBlock,
-    '\n\n',
-    qualityBlock,
-  ].join('');
+STEP 3 — PROJECT ARTWORK ON THE CENTRAL OBJECT ONLY:
+Apply the projection artwork EXCLUSIVELY on the identified central object.
+${worldDesc ? `Projection world style: ${worldDesc}.` : ''}
+${settings.customStylePrompt.trim() ? `Additional direction: ${settings.customStylePrompt.trim()}.` : ''}
+
+STRICT RULES:
+• ONLY the central object receives the projection — background stays untouched
+• Background, floor, sky, surrounding elements remain as in the original photo
+• The projected artwork must align perfectly to the object's geometry and perspective
+• Each face of the object gets its own projection panel — like a real 3D projection mapping show
+• The object's silhouette, edges, and corners must remain sharp and visible
+• The result looks like professional projection mapping light art running on the real central object
+• Surface transformation intensity: ${Math.round(settings.surfaceTransformationStrength * 100)}%
+• Projection light intensity: ${Math.round(settings.projectionIntensity * 100)}%
+• Glow emission: ${Math.round(settings.glowAmount * 100)}%
+• Darkness contrast: ${Math.round(settings.darknessContrast * 100)}%
+• Detail density: ${Math.round(settings.ornamentationLevel * 100)}%
+• Dark or night atmosphere preferred for maximum projection visibility
+
+Output: photorealistic, cinematic, high-detail. Projection mapping on central object only.
+====================================================
+`.trim();
 
   return {
     transformPrompt,
