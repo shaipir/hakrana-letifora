@@ -291,7 +291,7 @@ export default function TopBar() {
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="flex items-center gap-1.5 px-3 py-1 rounded text-xs border border-ar-border bg-ar-surface hover:bg-ar-border hover:border-ar-text-dim transition-colors disabled:opacity-50 tracking-wide"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs border border-ar-border bg-ar-surface hover:bg-ar-border hover:border-ar-text-dim active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed tracking-wide"
         >
           <Upload className="w-3 h-3" />
           {isUploading ? 'Loading…' : hasImage ? 'Replace' : 'Upload'}
@@ -329,7 +329,7 @@ export default function TopBar() {
         <button
           onClick={handleGenerate}
           disabled={!hasImage || isBusy}
-          className={`flex items-center gap-1.5 px-4 py-1 rounded text-xs font-medium tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed ${modeAccentClass}`}
+          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-medium tracking-wide transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 ${modeAccentClass}`}
         >
           <Zap className={`w-3 h-3 ${isBusy ? 'animate-spin' : ''}`} />
           {isBusy
@@ -341,7 +341,7 @@ export default function TopBar() {
         <button
           onClick={handleExport}
           disabled={(!selectedAsset && !generatedLoop) || isExporting}
-          className="flex items-center gap-1.5 px-3 py-1 rounded text-xs border border-ar-border bg-ar-surface hover:bg-ar-border transition-colors disabled:opacity-40 tracking-wide"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs border border-ar-border bg-ar-surface hover:bg-ar-border active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 tracking-wide"
         >
           <Download className="w-3 h-3" />
           {isExporting ? 'Exporting…' : 'Export'}
@@ -351,7 +351,8 @@ export default function TopBar() {
         <button
           onClick={() => setShowSettings(true)}
           title={hasKey ? 'Settings' : 'Add Gemini API key'}
-          className="relative p-1.5 rounded transition-colors text-ar-text-muted hover:text-ar-text hover:bg-ar-border"
+          aria-label="Open settings"
+          className="relative p-1.5 rounded-md transition-colors text-ar-text-muted hover:text-ar-text hover:bg-ar-border"
         >
           <Settings className="w-3.5 h-3.5" />
           {!hasKey && (
@@ -361,8 +362,8 @@ export default function TopBar() {
 
         {/* Reset */}
         {hasImage && (
-          <button onClick={resetProject} title="Reset project"
-            className="p-1.5 rounded text-ar-text-muted hover:text-ar-text hover:bg-ar-border transition-colors">
+          <button onClick={resetProject} title="Reset project" aria-label="Reset project"
+            className="p-1.5 rounded-md text-ar-text-muted hover:text-ar-text hover:bg-ar-border transition-colors">
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
         )}

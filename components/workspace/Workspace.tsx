@@ -52,23 +52,23 @@ export default function Workspace() {
         {/* ── Left panel ───────────────────────────────────────────────── */}
         <div className="flex flex-col w-64 shrink-0 overflow-hidden border-r border-ar-border">
           {/* Tab switcher */}
-          <div className="flex border-b border-ar-border shrink-0">
+          <div className="flex border-b border-ar-border shrink-0 bg-ar-panel">
             <button
               onClick={() => setLeftTab('settings')}
-              className={`flex-1 py-2 text-xs font-medium transition-colors ${
+              className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
                 leftTab === 'settings'
-                  ? 'text-ar-text border-b-2 border-ar-accent'
-                  : 'text-ar-text-muted hover:text-ar-text'
+                  ? 'text-ar-text border-b-2 border-ar-accent bg-ar-surface/40'
+                  : 'text-ar-text-muted hover:text-ar-text hover:bg-ar-surface/20'
               }`}
             >
               Settings
             </button>
             <button
               onClick={() => setLeftTab('projection')}
-              className={`flex-1 py-2 text-xs font-medium transition-colors relative ${
+              className={`flex-1 py-2.5 text-xs font-medium transition-colors relative ${
                 leftTab === 'projection'
-                  ? 'text-ar-text border-b-2 border-ar-accent'
-                  : 'text-ar-text-muted hover:text-ar-text'
+                  ? 'text-ar-text border-b-2 border-ar-accent bg-ar-surface/40'
+                  : 'text-ar-text-muted hover:text-ar-text hover:bg-ar-surface/20'
               }`}
             >
               Projection
@@ -77,7 +77,7 @@ export default function Workspace() {
                 project.objectIsolation.enabled ||
                 project.warpSettings.enabled ||
                 project.gridLayouts.length > 0) && (
-                <span className="absolute top-1 right-2 w-1.5 h-1.5 rounded-full bg-ar-accent" />
+                <span className="absolute top-2 right-3 w-1.5 h-1.5 rounded-full bg-ar-accent" />
               )}
             </button>
           </div>
@@ -108,28 +108,28 @@ export default function Workspace() {
         {/* ── Right panel ──────────────────────────────────────────────── */}
         <div className="flex flex-col w-48 shrink-0 overflow-hidden border-l border-ar-border">
           {/* Tab switcher */}
-          <div className="flex border-b border-ar-border shrink-0">
+          <div className="flex border-b border-ar-border shrink-0 bg-ar-panel">
             <button
               onClick={() => setRightTab('history')}
-              className={`flex-1 py-2 text-[10px] font-medium transition-colors ${
+              className={`flex-1 py-2.5 text-[10px] font-medium transition-colors ${
                 rightTab === 'history'
-                  ? 'text-ar-text border-b-2 border-ar-accent'
-                  : 'text-ar-text-muted hover:text-ar-text'
+                  ? 'text-ar-text border-b-2 border-ar-accent bg-ar-surface/40'
+                  : 'text-ar-text-muted hover:text-ar-text hover:bg-ar-surface/20'
               }`}
             >
               Results
             </button>
             <button
               onClick={() => setRightTab('generations')}
-              className={`flex-1 py-2 text-[10px] font-medium transition-colors relative ${
+              className={`flex-1 py-2.5 text-[10px] font-medium transition-colors relative ${
                 rightTab === 'generations'
-                  ? 'text-ar-text border-b-2 border-ar-accent'
-                  : 'text-ar-text-muted hover:text-ar-text'
+                  ? 'text-ar-text border-b-2 border-ar-accent bg-ar-surface/40'
+                  : 'text-ar-text-muted hover:text-ar-text hover:bg-ar-surface/20'
               }`}
             >
               History
               {project.generationHistory.length > 0 && (
-                <span className="absolute top-1 right-2 text-[9px] bg-ar-border text-ar-text-dim rounded px-0.5">
+                <span className="absolute top-2 right-2 text-[9px] bg-ar-accent/15 text-ar-accent border border-ar-accent/20 rounded-full px-1 leading-none py-0.5 font-mono">
                   {project.generationHistory.length}
                 </span>
               )}
