@@ -43,7 +43,8 @@
       "mcp__github__create_pull_request",
       "Skill(update-config)",
       "Skill(update-config:*)",
-      "Bash(npx vercel:*)"
+      "Bash(npx vercel:*)",
+      "Bash(npx next:*)"
     ]
   }
 }

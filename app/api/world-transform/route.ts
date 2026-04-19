@@ -83,25 +83,13 @@ export async function POST(req: NextRequest) {
       errors.push('no API key');
     }
 
-    // ── Fallback: Pollinations URL returned directly to client ─────────────
-    // Client fetches the image directly — no server timeout issue
-    const encodedPrompt = encodeURIComponent(transformPrompt.slice(0, 500));
-    const seed = Math.floor(Math.random() * 99999);
-    const pollUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
-
-    console.log('WORLD_TRANSFORM_PROVIDER', 'pollinations');
-    console.log('WORLD_TRANSFORM_MODEL', 'flux');
-    console.log('FALLBACK_USED', true);
-
+    // No fallback — return clear error so the client shows a message
     return NextResponse.json({
-      // Return the URL directly — browser loads it (no server fetch timeout)
-      pollinationsUrl: pollUrl,
-      motionHint,
-      provider: 'pollinations',
-      model: 'flux',
-      fallback: true,
-      fallbackReason: errors.join('; '),
-    });
+      error: errors.length
+        ? `Generation failed: ${errors.join('; ')}`
+        : 'Generation requires a Gemini API key. Add one in Settings.',
+      requiresApiKey: !errors.some((e) => !e.includes('no API key')),
+    }, { status: 422 });
 
   } catch (err: any) {
     console.error('[world-transform] unhandled:', err);

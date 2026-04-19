@@ -232,49 +232,46 @@ export default function TopBar() {
         const json = await safePost('/api/world-transform', {
           imageBase64, mimeType, settings: project.restyleSettings, apiKey: storedKey || undefined,
         });
-        if (json.fallback) setGenerateError(`⚠ Gemini fallback: ${json.fallbackReason}`);
-        const resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
+        if (!json.url) throw new Error(json.error ?? 'Generation failed — add a Gemini API key in Settings');
         const assetId = crypto.randomUUID();
-        addGeneratedAsset({ id: assetId, url: resultUrl, mode: 'restyle',
+        addGeneratedAsset({ id: assetId, url: json.url, mode: 'restyle',
           settings: project.restyleSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
         addGenerationHistory({ id: crypto.randomUUID(), createdAt: new Date().toISOString(),
           mode: 'restyle', outputType: 'still',
           prompt: project.restyleSettings.customStylePrompt,
           settingsSnapshot: project.restyleSettings as unknown as Record<string, unknown>,
           sourceAssetId: project.uploadedAsset.id, resultAssetIds: [assetId],
-          fallbackUsed: !!json.fallback });
+          fallbackUsed: false });
 
       } else if (activeMode === 'glow-sculpture') {
         const json = await safePost('/api/glow-sculpture', {
           imageBase64, mimeType, settings: project.glowSculptureSettings, apiKey: storedKey || undefined,
         });
-        if (json.fallback) setGenerateError(`⚠ Gemini fallback: ${json.fallbackReason}`);
-        const resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
+        if (!json.url) throw new Error(json.error ?? 'Generation failed — add a Gemini API key in Settings');
         const assetId2 = crypto.randomUUID();
-        addGeneratedAsset({ id: assetId2, url: resultUrl, mode: 'glow-sculpture',
+        addGeneratedAsset({ id: assetId2, url: json.url, mode: 'glow-sculpture',
           settings: project.glowSculptureSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
         addGenerationHistory({ id: crypto.randomUUID(), createdAt: new Date().toISOString(),
           mode: 'glow-sculpture', outputType: 'still',
           prompt: project.glowSculptureSettings.customStylePrompt,
           settingsSnapshot: project.glowSculptureSettings as unknown as Record<string, unknown>,
           sourceAssetId: project.uploadedAsset.id, resultAssetIds: [assetId2],
-          fallbackUsed: !!json.fallback });
+          fallbackUsed: false });
 
       } else if (activeMode === 'house-projection') {
         const json = await safePost('/api/house-projection', {
           imageBase64, mimeType, settings: project.houseProjectionSettings, apiKey: storedKey || undefined,
         });
-        if (json.fallback) setGenerateError(`⚠ Gemini fallback: ${json.fallbackReason}`);
-        const resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
+        if (!json.url) throw new Error(json.error ?? 'House Projection requires a Gemini API key — add one in Settings');
         const assetId3 = crypto.randomUUID();
-        addGeneratedAsset({ id: assetId3, url: resultUrl, mode: 'house-projection',
+        addGeneratedAsset({ id: assetId3, url: json.url, mode: 'house-projection',
           settings: project.houseProjectionSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
         addGenerationHistory({ id: crypto.randomUUID(), createdAt: new Date().toISOString(),
           mode: 'house-projection', outputType: 'still',
           prompt: project.houseProjectionSettings.customStylePrompt,
           settingsSnapshot: project.houseProjectionSettings as unknown as Record<string, unknown>,
           sourceAssetId: project.uploadedAsset.id, resultAssetIds: [assetId3],
-          fallbackUsed: !!json.fallback });
+          fallbackUsed: false });
       }
     } catch (err: any) {
       setGenerateError(err?.message ?? 'Generation failed');
