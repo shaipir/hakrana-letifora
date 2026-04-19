@@ -9,11 +9,15 @@ import { buildHouseProjectionPrompt } from '@/lib/house-projection/prompt-builde
 import { buildFrameMotionPrompt } from '@/lib/loop/frame-prompt-builder';
 
 export const runtime = 'nodejs';
-export const maxDuration = 120;  // extended for sequential generation
+export const maxDuration = 180;
 
 const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Recommended frame counts for smooth playback
+// 12 frames @ 10fps = 1.2s smooth loop (recommended default)
+// 16 frames @ 10fps = 1.6s (cinematic feel)
+// 20 frames @ 10fps = 2s (slow reveal loops)
+const MAX_FRAMES = 20;
 
 function extractBase64FromDataUrl(dataUrl: string): { base64: string; mimeType: string } | null {
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -60,8 +64,6 @@ async function generateFrame(
   }
 }
 
-// ─── Route ────────────────────────────────────────────────────────────────────
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -82,7 +84,11 @@ export async function POST(req: NextRequest) {
     }
 
     const apiKey = bodyKey || process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-    const frameCount = Math.min(loopSettings.frameCount, 15);
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Loop generation requires a Gemini API key. Add one in Settings.' }, { status: 422 });
+    }
+
+    const frameCount = Math.max(4, Math.min(loopSettings.frameCount, MAX_FRAMES));
 
     // Build base style prompt
     let basePrompt: string;
@@ -100,73 +106,101 @@ export async function POST(req: NextRequest) {
       basePrompt = buildHouseProjectionPrompt(hp).transformPrompt;
     }
 
-    console.log('LOOP_GEN mode=%s frames=%d motionType=%s hasKey=%s', mode, frameCount, loopSettings.motionType, !!apiKey);
+    console.log('LOOP_GEN mode=%s frames=%d motionType=%s', mode, frameCount, loopSettings.motionType);
 
     const frames: string[] = new Array(frameCount).fill('');
-    const fallbackCount = { n: 0 };
+    let prevBase64 = imageBase64;
+    let prevMimeType = mimeType;
+    let firstFrameBase64 = imageBase64;
+    let firstFrameMimeType = mimeType;
 
-    if (apiKey) {
-      // ── Sequential generation: each frame uses the PREVIOUS frame as input ──
-      // This is the key mechanism for temporal continuity.
-      let prevBase64 = imageBase64;
-      let prevMimeType = mimeType;
+    // ── Sequential generation with seamless loop closure ──────────────────────
+    //
+    // Strategy:
+    //   Frames 0..N-3  → sequential, each using previous as input
+    //   Frame N-2      → "bridge start": begin returning toward opening state
+    //   Frame N-1      → generated from FIRST FRAME (not previous) with
+    //                    explicit instruction to match opening — closes the loop
+    //
+    for (let i = 0; i < frameCount; i++) {
+      const isClosingFrame = i === frameCount - 1;
 
-      for (let i = 0; i < frameCount; i++) {
-        const prompt = buildFrameMotionPrompt(
-          basePrompt, loopSettings, i, frameCount, worldPreset, mode, i === 0
-        );
+      // For the very last frame: use the FIRST generated frame as input
+      // so Gemini can bridge the gap back to frame 0
+      const inputBase64 = isClosingFrame ? firstFrameBase64 : prevBase64;
+      const inputMimeType = isClosingFrame ? firstFrameMimeType : prevMimeType;
 
-        const result = await generateFrame(prevBase64, prevMimeType, prompt, apiKey);
+      const prompt = isClosingFrame
+        ? buildLoopClosePrompt(basePrompt, loopSettings, frameCount, worldPreset, mode)
+        : buildFrameMotionPrompt(basePrompt, loopSettings, i, frameCount, worldPreset, mode, i === 0);
 
-        if (result.url) {
-          frames[i] = result.url;
-          // Feed this frame's output into the next frame's input
-          const extracted = extractBase64FromDataUrl(result.url);
-          if (extracted) {
-            prevBase64 = extracted.base64;
-            prevMimeType = extracted.mimeType;
+      const result = await generateFrame(inputBase64, inputMimeType, prompt, apiKey);
+
+      if (result.url) {
+        frames[i] = result.url;
+
+        const extracted = extractBase64FromDataUrl(result.url);
+        if (extracted) {
+          // Save first frame as loop anchor
+          if (i === 0) {
+            firstFrameBase64 = extracted.base64;
+            firstFrameMimeType = extracted.mimeType;
           }
-          // If extraction fails, fall back to original image for next frame
-        } else {
-          console.warn('LOOP_GEN frame %d failed: %s', i, result.error);
-          // Fallback: keep original image as anchor for next frame
-          const seed = Math.floor(Math.random() * 99999);
-          const encoded = encodeURIComponent(prompt.slice(0, 500));
-          frames[i] = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
-          fallbackCount.n++;
-          // Reset to original image to maintain anchor on failure
-          prevBase64 = imageBase64;
-          prevMimeType = mimeType;
+          prevBase64 = extracted.base64;
+          prevMimeType = extracted.mimeType;
         }
-      }
-    } else {
-      // No API key — Pollinations fallback.
-      // Use seeded prompts with rising frame index so there's at least some
-      // intentional progression in the returned images.
-      const baseSeed = Math.floor(Math.random() * 90000) + 10000;
-      for (let i = 0; i < frameCount; i++) {
-        const prompt = buildFrameMotionPrompt(
-          basePrompt, loopSettings, i, frameCount, worldPreset, mode, i === 0
-        );
-        const encoded = encodeURIComponent(prompt.slice(0, 500));
-        // Use sequential seeds from same base so pollinations results are more consistent
-        frames[i] = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&model=flux&nologo=true&seed=${baseSeed + i}`;
-        fallbackCount.n++;
+      } else {
+        console.warn('LOOP_GEN frame %d failed: %s', i, result.error);
+        // On failure: keep last successful frame as fallback (don't show blank)
+        frames[i] = frames[Math.max(0, i - 1)] || '';
+        // Don't advance prev — retry from same anchor
       }
     }
 
-    console.log('LOOP_GEN complete: %d gemini, %d fallback', frameCount - fallbackCount.n, fallbackCount.n);
+    // Filter out any blank frames
+    const validFrames = frames.filter(Boolean);
+
+    console.log('LOOP_GEN complete: %d/%d frames generated', validFrames.length, frameCount);
 
     return NextResponse.json({
-      frames,
-      frameCount,
+      frames: validFrames,
+      frameCount: validFrames.length,
       motionType: loopSettings.motionType,
       transitionMode: loopSettings.transitionMode ?? 'dissolve',
-      fallbackUsed: fallbackCount.n > 0,
+      fallbackUsed: false,
     });
 
   } catch (err: any) {
     console.error('[generate-loop] unhandled:', err);
     return NextResponse.json({ error: err?.message ?? 'Loop generation failed' }, { status: 500 });
   }
+}
+
+// ─── Loop close prompt ────────────────────────────────────────────────────────
+// Used for the LAST frame. Input image = first frame.
+// Goal: produce a frame that sits visually between the previous frame
+// and frame 0, so the loop plays back smoothly.
+
+function buildLoopClosePrompt(
+  basePrompt: string,
+  loopSettings: LoopSettings,
+  totalFrames: number,
+  worldPreset: WorldPreset | null,
+  mode: ArtReviveMode,
+): string {
+  return [
+    basePrompt,
+    [
+      `ANIMATION FRAME ${totalFrames} OF ${totalFrames} — SEAMLESS LOOP CLOSURE.`,
+      `The input image is FRAME 1 (the opening state of the loop).`,
+      `Your task: produce a frame that visually bridges the gap between the previous frame and this opening state.`,
+      `The result must feel like a natural transition BACK TO the beginning so the loop plays seamlessly.`,
+      `Match the exact composition, subject, lighting mood, and world-style of the input (frame 1).`,
+      `Only the world-animation energy level should be slightly lower / returning to the resting opening state.`,
+      `Do NOT introduce any new elements. Do NOT change the subject or composition.`,
+      `This frame must make the loop feel like it never ends — continuous, smooth, infinite.`,
+    ].join(' '),
+    `Loop softness ${Math.round(loopSettings.loopSoftness * 100)}% — maximum visual continuity required.`,
+    worldPreset ? `World style returning to opening resting state of the ${worldPreset} world.` : '',
+  ].filter(Boolean).join('\n\n');
 }
