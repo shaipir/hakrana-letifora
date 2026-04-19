@@ -195,6 +195,7 @@ interface ArtReviveState {
   activeMode: ArtReviveMode;
   selectedResultId: string | null;
   generatedLoop: GeneratedLoop | null;
+  loopHistory: GeneratedLoop[];
   isUploading: boolean;
   isGenerating: boolean;
   isGeneratingLoop: boolean;
@@ -213,6 +214,7 @@ interface ArtReviveState {
   addGeneratedAsset: (asset: GeneratedAsset) => void;
   removeGeneratedAsset: (id: string) => void;
   setGeneratedLoop: (loop: GeneratedLoop | null) => void;
+  pushLoopHistory: (loop: GeneratedLoop) => void;
   selectResult: (id: string | null) => void;
   setUploading: (v: boolean) => void;
   setGenerating: (v: boolean) => void;
@@ -276,6 +278,7 @@ export const useArtReviveStore = create<ArtReviveState>((set, get) => ({
   activeMode: 'restyle',
   selectedResultId: null,
   generatedLoop: null,
+  loopHistory: [],
   isUploading: false,
   isGenerating: false,
   isGeneratingLoop: false,
@@ -371,7 +374,8 @@ export const useArtReviveStore = create<ArtReviveState>((set, get) => ({
     })),
 
   setGeneratedLoop: (loop) => set({ generatedLoop: loop }),
-  selectResult: (id) => set({ selectedResultId: id }),
+  pushLoopHistory: (loop) => set((s) => ({ loopHistory: [loop, ...s.loopHistory].slice(0, 20) })),
+  selectResult: (id) => set({ selectedResultId: id, generatedLoop: null }),
   setUploading: (v) => set({ isUploading: v }),
   setGenerating: (v) => set({ isGenerating: v }),
   setGeneratingLoop: (v) => set({ isGeneratingLoop: v }),
@@ -805,6 +809,7 @@ export const useArtReviveStore = create<ArtReviveState>((set, get) => ({
       activeMode: 'restyle',
       selectedResultId: null,
       generatedLoop: null,
+      loopHistory: [],
       isUploading: false,
       isGenerating: false,
       isGeneratingLoop: false,

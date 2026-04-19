@@ -2,12 +2,13 @@
 
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import { GeneratedAsset } from '@/lib/types';
-import { Download, Clock, Trash2 } from 'lucide-react';
+import { Download, Clock, Trash2, Film, Play } from 'lucide-react';
 
 export default function HistoryPanel() {
   const {
     project, selectedResultId, selectResult,
     setExporting, removeGeneratedAsset,
+    generatedLoop, loopHistory, setGeneratedLoop,
   } = useArtReviveStore();
   const { generatedAssets } = project;
 
@@ -43,6 +44,36 @@ export default function HistoryPanel() {
           </span>
         )}
       </div>
+
+      {/* Loop history */}
+      {loopHistory.length > 0 && (
+        <div className="px-2 pt-2 pb-1 space-y-1.5 border-b border-ar-border">
+          <span className="text-[9px] text-ar-text-dim uppercase tracking-widest px-1 flex items-center gap-1">
+            <Film className="w-2.5 h-2.5" /> Loops
+          </span>
+          {loopHistory.map((loop) => {
+            const isActive = generatedLoop?.id === loop.id;
+            return (
+              <div
+                key={loop.id}
+                onClick={() => setGeneratedLoop(isActive ? null : loop)}
+                className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer border transition-all ${
+                  isActive
+                    ? 'bg-ar-accent/10 border-ar-accent/40 text-ar-accent'
+                    : 'bg-ar-surface border-ar-border text-ar-text-muted hover:border-ar-accent/30'
+                }`}
+              >
+                <Play className="w-3 h-3 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-mono truncate">{loop.mode}</p>
+                  <p className="text-[9px] text-ar-text-dim">{loop.frameCount}f · {new Date(loop.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+                {isActive && <span className="text-[9px] text-ar-accent shrink-0">▶</span>}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Asset list */}
       <div className="flex-1 overflow-y-auto p-2 space-y-2">

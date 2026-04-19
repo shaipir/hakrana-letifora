@@ -513,17 +513,6 @@ function ProjectionWarpSection() {
 
 export default function ProjectionWorkflowPanel() {
   const { project } = useArtReviveStore();
-  const hasResult = project.generatedAssets.length > 0;
-
-  if (!hasResult) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8 px-4 text-center gap-2">
-        <p className="text-xs text-ar-text-dim">
-          Generate a result first to access projection workflow tools.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col overflow-y-auto">

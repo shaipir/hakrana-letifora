@@ -16,7 +16,7 @@ export default function TopBar() {
     setUploadedAsset, setUploading, setUploadError,
     selectedResultId, project: { generatedAssets, loopSettings },
     setGenerating, setGeneratingLoop, setGenerateError, addGeneratedAsset, setGeneratedLoop,
-    setExporting, resetProject, generatedLoop, addGenerationHistory,
+    setExporting, resetProject, generatedLoop, addGenerationHistory, pushLoopHistory,
   } = useArtReviveStore();
 
   const hasImage = !!project.uploadedAsset;
@@ -160,6 +160,7 @@ export default function TopBar() {
           createdAt: new Date().toISOString(),
         };
         setGeneratedLoop(loop);
+        pushLoopHistory(loop);
         addGenerationHistory({
           id: crypto.randomUUID(), createdAt: new Date().toISOString(),
           mode: activeMode, outputType: 'loop',
@@ -179,6 +180,7 @@ export default function TopBar() {
 
     setGenerating(true);
     setGenerateError(null);
+    setGeneratedLoop(null);  // clear loop so still image is visible
     try {
       const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1024);
 
