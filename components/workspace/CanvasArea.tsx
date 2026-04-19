@@ -1,9 +1,9 @@
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Upload, Maximize2, Columns2, Layers, Crosshair, Grid, Sun, Square, X, Crop } from 'lucide-react';
+import { Upload, Maximize2, Columns2, Layers, Crosshair, Grid, Sun, Square, X, Crop, Pencil } from 'lucide-react';
 import { useArtReviveStore } from '@/lib/artrevive-store';
-import { UploadedAsset, GridLayout, SelectedRegion } from '@/lib/types';
+import { UploadedAsset, GridLayout, SelectedRegion, ProjectionArea } from '@/lib/types';
 import LoopPlayer from '@/components/canvas/LoopPlayer';
 import GridNoiseBg from '@/components/effects/GridNoiseBg';
 import OrbitLoader from '@/components/effects/OrbitLoader';
@@ -74,6 +74,7 @@ export default function CanvasArea() {
     selectedResultId, generatedLoop,
     updateReferenceProjection,
     setSelectedRegion,
+    updateProjectionArea,
   } = useArtReviveStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -91,6 +92,13 @@ export default function CanvasArea() {
   const displayUrl = showOriginal ? source?.url : selectedResult?.url ?? source?.url;
   const isLoadingAny = isGenerating || isGeneratingLoop;
   const selection = project.selectedRegion;
+
+  // Active projection area drawing
+  const activeArea = project.projectionAreas.find((a) => a.id === project.activeAreaId);
+  const [projDrag, setProjDrag] = useState<{ sx: number; sy: number; cx: number; cy: number; active: boolean }>({ sx: 0, sy: 0, cx: 0, cy: 0, active: false });
+  const [polyPoints, setPolyPoints] = useState<{ x: number; y: number }[]>([]);
+  const [paintPoints, setPaintPoints] = useState<{ x: number; y: number }[]>([]);
+  const isProjDrawing = !!activeArea;
 
   // ── Upload ──────────────────────────────────────────────────────────────────
 
@@ -161,6 +169,63 @@ export default function CanvasArea() {
     setDrawMode('off');
   }
 
+  // ── Projection area drawing ─────────────────────────────────────────────────
+
+  function onProjPointerDown(e: React.PointerEvent) {
+    if (!activeArea || !imgRef.current) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const n = toNorm(e.clientX, e.clientY);
+    if (!n) return;
+    if (activeArea.type === 'rectangle') {
+      setProjDrag({ sx: n.nx, sy: n.ny, cx: n.nx, cy: n.ny, active: true });
+    } else if (activeArea.type === 'painted') {
+      setPaintPoints([{ x: n.nx, y: n.ny }]);
+    } else if (activeArea.type === 'polygon') {
+      // Check if clicking near first point to close
+      if (polyPoints.length >= 3) {
+        const first = polyPoints[0];
+        const dist = Math.hypot(n.nx - first.x, n.ny - first.y);
+        if (dist < 0.03) {
+          updateProjectionArea(activeArea.id, { points: polyPoints });
+          setPolyPoints([]);
+          return;
+        }
+      }
+      setPolyPoints((prev) => [...prev, { x: n.nx, y: n.ny }]);
+    }
+  }
+
+  function onProjPointerMove(e: React.PointerEvent) {
+    if (!activeArea || !imgRef.current) return;
+    const n = toNorm(e.clientX, e.clientY);
+    if (!n) return;
+    if (activeArea.type === 'rectangle' && projDrag.active) {
+      setProjDrag((d) => ({ ...d, cx: n.nx, cy: n.ny }));
+    } else if (activeArea.type === 'painted' && paintPoints.length > 0) {
+      setPaintPoints((prev) => [...prev, { x: n.nx, y: n.ny }]);
+    }
+  }
+
+  function onProjPointerUp() {
+    if (!activeArea) return;
+    if (activeArea.type === 'rectangle' && projDrag.active) {
+      const x = Math.min(projDrag.sx, projDrag.cx);
+      const y = Math.min(projDrag.sy, projDrag.cy);
+      const w = Math.abs(projDrag.cx - projDrag.sx);
+      const h = Math.abs(projDrag.cy - projDrag.sy);
+      if (w > 0.01 && h > 0.01) {
+        // Store as 4 corner points
+        updateProjectionArea(activeArea.id, {
+          points: [{ x, y }, { x: x + w, y }, { x: x + w, y: y + h }, { x, y: y + h }],
+        });
+      }
+      setProjDrag((d) => ({ ...d, active: false }));
+    } else if (activeArea.type === 'painted' && paintPoints.length > 2) {
+      updateProjectionArea(activeArea.id, { points: paintPoints });
+      setPaintPoints([]);
+    }
+  }
+
   // Compute live drag rect in % for SVG overlay
   const liveRect = drag.active ? {
     x: Math.min(drag.startX, drag.curX) * 100,
@@ -172,14 +237,14 @@ export default function CanvasArea() {
   // ── Image wrapper with overlays ─────────────────────────────────────────────
 
   function ImageWithOverlays({ url, alt }: { url: string; alt: string }) {
-    const cursor = drawMode === 'rect' ? 'crosshair' : 'default';
+    const cursor = drawMode === 'rect' ? 'crosshair' : isProjDrawing ? 'crosshair' : 'default';
     return (
       <div
         className="relative select-none"
         style={{ cursor, userSelect: 'none' }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
+        onPointerDown={(e) => { onPointerDown(e); onProjPointerDown(e); }}
+        onPointerMove={(e) => { onPointerMove(e); onProjPointerMove(e); }}
+        onPointerUp={() => { onPointerUp(); onProjPointerUp(); }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -235,9 +300,77 @@ export default function CanvasArea() {
           )}
         </svg>
 
+        {/* Projection areas overlay */}
+        {(project.projectionAreas.length > 0 || projDrag.active || polyPoints.length > 0) && (
+          <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
+            {/* Committed areas */}
+            {project.projectionAreas.map((area) => {
+              if (area.points.length < 3) return null;
+              const pts = area.points.map((p) => `${p.x * 100},${p.y * 100}`).join(' ');
+              const isActive = area.id === project.activeAreaId;
+              const color = area.kind === 'project' ? '#00e5ff' : '#ff2d78';
+              return (
+                <polygon key={area.id}
+                  points={pts}
+                  fill={`${color}22`}
+                  stroke={color}
+                  strokeWidth={isActive ? '0.8' : '0.5'}
+                  strokeDasharray={isActive ? undefined : '2 1.5'}
+                />
+              );
+            })}
+            {/* Live rect drag */}
+            {projDrag.active && activeArea?.type === 'rectangle' && (() => {
+              const x = Math.min(projDrag.sx, projDrag.cx) * 100;
+              const y = Math.min(projDrag.sy, projDrag.cy) * 100;
+              const w = Math.abs(projDrag.cx - projDrag.sx) * 100;
+              const h = Math.abs(projDrag.cy - projDrag.sy) * 100;
+              const color = activeArea.kind === 'project' ? '#00e5ff' : '#ff2d78';
+              return <rect x={x} y={y} width={w} height={h} fill={`${color}20`} stroke={color} strokeWidth="0.6" strokeDasharray="2 1.5" />;
+            })()}
+            {/* Live polygon */}
+            {polyPoints.length > 0 && activeArea?.type === 'polygon' && (() => {
+              const color = activeArea.kind === 'project' ? '#00e5ff' : '#ff2d78';
+              const pts = polyPoints.map((p) => `${p.x * 100},${p.y * 100}`).join(' ');
+              return (
+                <>
+                  <polyline points={pts} fill="none" stroke={color} strokeWidth="0.6" strokeDasharray="2 1.5" />
+                  {polyPoints.map((p, i) => (
+                    <circle key={i} cx={p.x * 100} cy={p.y * 100} r={i === 0 ? 1.5 : 0.8} fill={color} opacity={0.8} />
+                  ))}
+                </>
+              );
+            })()}
+            {/* Live paint path */}
+            {paintPoints.length > 1 && activeArea?.type === 'painted' && (() => {
+              const color = activeArea.kind === 'project' ? '#00e5ff' : '#ff2d78';
+              const d = paintPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x * 100} ${p.y * 100}`).join(' ') + ' Z';
+              return <path d={d} fill={`${color}20`} stroke={color} strokeWidth="0.5" />;
+            })()}
+          </svg>
+        )}
+
         {/* Grid face overlay */}
         {project.gridLayouts.length > 0 && (
           <GridFaceOverlay gridLayouts={project.gridLayouts} activeGridId={project.activeGridId} />
+        )}
+
+        {/* Active projection area draw hint */}
+        {activeArea && (
+          <div className={`absolute top-2 left-2 flex items-center gap-1.5 rounded px-2 py-1 z-20 text-[10px] font-medium border ${
+            activeArea.kind === 'project'
+              ? 'bg-ar-accent/15 border-ar-accent/40 text-ar-accent'
+              : 'bg-ar-neon-pink/15 border-ar-neon-pink/40 text-ar-neon-pink'
+          }`}>
+            <Pencil className="w-3 h-3" />
+            {activeArea.points.length === 0
+              ? activeArea.type === 'polygon'
+                ? 'Click to add polygon points · click first point to close'
+                : activeArea.type === 'painted'
+                ? 'Draw on image to paint area'
+                : 'Drag to draw rectangle'
+              : `${activeArea.kind === 'project' ? 'Projection' : 'Blackout'} area set`}
+          </div>
         )}
 
         {/* Selection badge */}
