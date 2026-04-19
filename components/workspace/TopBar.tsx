@@ -1,7 +1,8 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import { Upload, Zap, Download, RotateCcw, Layers, Settings, X, Eye, EyeOff } from 'lucide-react';
+import { Upload, Zap, Download, RotateCcw, Layers, Settings, X, Eye, EyeOff, Monitor } from 'lucide-react';
+import { sendProjectionState } from '@/lib/projection-bridge';
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import { UploadedAsset, GeneratedAsset, GeneratedLoop, GenerationHistoryItem } from '@/lib/types';
 
@@ -346,6 +347,29 @@ export default function TopBar() {
           <Download className="w-3 h-3" />
           {isExporting ? 'Exporting…' : 'Export'}
         </button>
+
+        {/* Project */}
+        {hasImage && (
+          <button
+            onClick={() => {
+              const projectionState = {
+                gridLayouts: project.gridLayouts,
+                activeGridId: project.activeGridId,
+                generatedAssets: project.generatedAssets,
+                generatedLoopFrames: generatedLoop ? { [generatedLoop.id]: generatedLoop.frames } : {},
+                activeLoopId: generatedLoop?.id ?? null,
+                uploadedAssetUrl: project.uploadedAsset?.url ?? null,
+                viewMode: 'final',
+              };
+              sendProjectionState(projectionState);
+              window.open('/projection-output', 'artrevive-projection', 'width=1280,height=800,menubar=no,toolbar=no,location=no,status=no');
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs border border-ar-accent/40 bg-ar-accent/8 text-ar-accent hover:bg-ar-accent/15 active:scale-95 transition-all"
+          >
+            <Monitor className="w-3 h-3" />
+            Project
+          </button>
+        )}
 
         {/* Settings */}
         <button

@@ -5,7 +5,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #050507;
+  background: #0c0c14;
   color: #e8e8f0;
   font-family: var(--font-sans, 'Space Grotesk', system-ui, sans-serif);
   overflow: hidden;
@@ -18,9 +18,9 @@ body {
 
 /* ── Scrollbars ─────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: #0d0d12; }
-::-webkit-scrollbar-thumb { background: #1c1c2e; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #2a2a3e; }
+::-webkit-scrollbar-track { background: #13131e; }
+::-webkit-scrollbar-thumb { background: #252540; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #363660; }
 
 /* ── Glass utility ──────────────────────────────────────────────────────── */
 .glass {

@@ -34,6 +34,30 @@ export default function Workspace() {
     return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current); };
   }, [project.updatedAt]); // only fires when something actually changed
 
+  // Broadcast state to projection output window whenever project changes
+  const projBroadcastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (projBroadcastRef.current) clearTimeout(projBroadcastRef.current);
+    projBroadcastRef.current = setTimeout(() => {
+      // Only broadcast if projection channel might be open
+      if (typeof window === 'undefined') return;
+      const projState = {
+        gridLayouts: project.gridLayouts,
+        activeGridId: project.activeGridId,
+        generatedAssets: project.generatedAssets,
+        uploadedAssetUrl: project.uploadedAsset?.url ?? null,
+        viewMode: 'final',
+      };
+      try {
+        localStorage.setItem('artrevive_projection_state', JSON.stringify(projState));
+        const ch = new BroadcastChannel('artrevive-projection');
+        ch.postMessage({ type: 'STATE_UPDATE', payload: projState });
+        ch.close();
+      } catch {}
+    }, 500);
+    return () => { if (projBroadcastRef.current) clearTimeout(projBroadcastRef.current); };
+  }, [project.updatedAt]);
+
   // Switch to projection tab automatically when first result comes in
   const prevAssetCount = useRef(project.generatedAssets.length);
   useEffect(() => {

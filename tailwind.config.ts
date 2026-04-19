@@ -19,14 +19,14 @@ const config: Config = {
         surface: '#161616',
 
         // ArtRevive design tokens
-        'ar-bg': '#050507',
-        'ar-surface': '#0d0d12',
-        'ar-panel': '#10101a',
-        'ar-border': '#1c1c2e',
-        'ar-border-subtle': '#151520',
-        'ar-text': '#e8e8f0',
-        'ar-text-muted': '#6b6b8a',
-        'ar-text-dim': '#3a3a52',
+        'ar-bg': '#0c0c14',
+        'ar-surface': '#13131e',
+        'ar-panel': '#17172a',
+        'ar-border': '#252540',
+        'ar-border-subtle': '#1e1e30',
+        'ar-text': '#f0f0f8',
+        'ar-text-muted': '#8888aa',
+        'ar-text-dim': '#50507a',
         'ar-accent': '#00e5ff',        // neon cyan
         'ar-accent-hover': '#00bcd4',
         'ar-accent-glow': 'rgba(0,229,255,0.2)',
@@ -38,7 +38,7 @@ const config: Config = {
         'ar-gold': '#f0c040',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       boxShadow: {
