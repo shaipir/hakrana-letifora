@@ -3,19 +3,30 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useArtReviveStore } from '@/lib/artrevive-store';
-import { WorldPreset } from '@/lib/types';
+import { WorldPreset, VisualLanguagePreset } from '@/lib/types';
+import PresetCard from '@/components/ui/PresetCard';
+import SectionLabel from '@/components/ui/SectionLabel';
 
-const WORLDS: { id: WorldPreset; emoji: string; label: string; color: string }[] = [
-  { id: 'forest',  emoji: '🌿', label: 'Forest',  color: 'hover:border-green-500/60 data-[active=true]:border-green-500/70 data-[active=true]:bg-green-500/10 data-[active=true]:text-green-300' },
-  { id: 'sea',     emoji: '🌊', label: 'Sea',     color: 'hover:border-blue-400/60 data-[active=true]:border-blue-400/70 data-[active=true]:bg-blue-400/10 data-[active=true]:text-blue-200' },
-  { id: 'fire',    emoji: '🔥', label: 'Fire',    color: 'hover:border-orange-400/60 data-[active=true]:border-orange-400/70 data-[active=true]:bg-orange-400/10 data-[active=true]:text-orange-300' },
-  { id: 'spirit',  emoji: '👻', label: 'Spirit',  color: 'hover:border-purple-400/60 data-[active=true]:border-purple-400/70 data-[active=true]:bg-purple-400/10 data-[active=true]:text-purple-300' },
-  { id: 'cartoon', emoji: '🎨', label: 'Cartoon', color: 'hover:border-yellow-400/60 data-[active=true]:border-yellow-400/70 data-[active=true]:bg-yellow-400/10 data-[active=true]:text-yellow-200' },
-  { id: 'ice',     emoji: '❄️', label: 'Ice',     color: 'hover:border-cyan-300/60 data-[active=true]:border-cyan-300/70 data-[active=true]:bg-cyan-300/10 data-[active=true]:text-cyan-200' },
-  { id: 'crystal', emoji: '💎', label: 'Crystal', color: 'hover:border-pink-400/60 data-[active=true]:border-pink-400/70 data-[active=true]:bg-pink-400/10 data-[active=true]:text-pink-300' },
-  { id: 'shadow',  emoji: '🌑', label: 'Shadow',  color: 'hover:border-gray-400/60 data-[active=true]:border-gray-400/70 data-[active=true]:bg-gray-400/10 data-[active=true]:text-gray-300' },
-  { id: 'floral',  emoji: '🌸', label: 'Floral',  color: 'hover:border-rose-400/60 data-[active=true]:border-rose-400/70 data-[active=true]:bg-rose-400/10 data-[active=true]:text-rose-300' },
-  { id: 'machine', emoji: '⚙️', label: 'Machine', color: 'hover:border-zinc-400/60 data-[active=true]:border-zinc-400/70 data-[active=true]:bg-zinc-400/10 data-[active=true]:text-zinc-300' },
+const WORLDS: { id: WorldPreset; emoji: string; label: string; accent: string }[] = [
+  { id: 'forest',  emoji: '🌿', label: 'Forest',  accent: 'green' },
+  { id: 'sea',     emoji: '🌊', label: 'Sea',     accent: 'blue' },
+  { id: 'fire',    emoji: '🔥', label: 'Fire',    accent: 'orange' },
+  { id: 'spirit',  emoji: '👻', label: 'Spirit',  accent: 'violet' },
+  { id: 'cartoon', emoji: '🎨', label: 'Cartoon', accent: 'cyan' },
+  { id: 'ice',     emoji: '❄️', label: 'Ice',     accent: 'cyan' },
+  { id: 'crystal', emoji: '💎', label: 'Crystal', accent: 'pink' },
+  { id: 'shadow',  emoji: '🌑', label: 'Shadow',  accent: 'cyan' },
+  { id: 'floral',  emoji: '🌸', label: 'Floral',  accent: 'pink' },
+  { id: 'machine', emoji: '⚙️', label: 'Machine', accent: 'cyan' },
+];
+
+const VISUAL_LANGS: { id: VisualLanguagePreset; emoji: string; label: string }[] = [
+  { id: 'none',            emoji: '○',  label: 'None' },
+  { id: 'bioluminescent',  emoji: '✨', label: 'Bioluminescent' },
+  { id: 'sacred-geometry', emoji: '🔯', label: 'Sacred Geometry' },
+  { id: 'mandala',         emoji: '🌀', label: 'Mandala' },
+  { id: 'deep-dream',      emoji: '👁️', label: 'Deep Dream' },
+  { id: 'visionary',       emoji: '🌌', label: 'Visionary' },
 ];
 
 export default function StylePanel() {
@@ -41,46 +52,75 @@ export default function StylePanel() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-4 p-4 animate-fade-up">
 
-      {/* World presets — only for restyle + house */}
+      {/* World presets — restyle + house */}
       {activeMode !== 'glow-sculpture' && (
         <div>
-          <p className="text-[10px] text-ar-text-muted uppercase tracking-widest mb-2">Style</p>
+          <SectionLabel>Style</SectionLabel>
           <div className="grid grid-cols-5 gap-1">
             {WORLDS.map((w) => (
-              <button
+              <PresetCard
                 key={w.id}
-                data-active={currentPreset === w.id}
+                active={currentPreset === w.id}
                 onClick={() => setPreset(w.id)}
-                className={`flex flex-col items-center gap-0.5 py-2 rounded-lg border border-ar-border text-[10px] text-ar-text-muted transition-all ${w.color}`}
+                accentColor={w.accent}
               >
                 <span className="text-sm leading-none">{w.emoji}</span>
                 <span className="leading-none">{w.label}</span>
-              </button>
+              </PresetCard>
             ))}
           </div>
         </div>
       )}
 
-      {/* Glow style — only for glow-sculpture */}
+      {/* Visual Language — restyle only */}
+      {activeMode === 'restyle' && (
+        <div>
+          <SectionLabel>Visual Language</SectionLabel>
+          <div className="flex flex-col gap-1">
+            {VISUAL_LANGS.map((vl) => {
+              const active = rs.visualLanguage === vl.id;
+              return (
+                <button
+                  key={vl.id}
+                  onClick={() => updateRestyleSettings({ visualLanguage: vl.id })}
+                  className={[
+                    'flex items-center gap-2.5 px-3 py-2 rounded-lg border text-xs transition-all duration-200',
+                    active
+                      ? 'bg-ar-accent/10 border-ar-accent/40 text-ar-text shadow-[0_0_10px_rgba(0,229,255,0.15)]'
+                      : 'border-ar-border text-ar-text-muted hover:border-ar-border-subtle hover:text-ar-text hover:bg-ar-surface/30',
+                  ].join(' ')}
+                >
+                  <span className="text-base leading-none w-5 text-center">{vl.emoji}</span>
+                  <span>{vl.label}</span>
+                  {active && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-ar-accent animate-pulse-dot" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Glow style — glow-sculpture only */}
       {activeMode === 'glow-sculpture' && (
         <div>
-          <p className="text-[10px] text-ar-text-muted uppercase tracking-widest mb-2">Contour Style</p>
+          <SectionLabel>Contour Style</SectionLabel>
           <div className="grid grid-cols-2 gap-1.5">
             {(['neon-sign', 'light-paint', 'plasma', 'laser', 'molten', 'ethereal'] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => updateGlowSculptureSettings({ contourStyle: s })}
-                className={`py-1.5 rounded-lg border text-xs transition-all capitalize ${gs.contourStyle === s ? 'bg-ar-accent/15 border-ar-accent/50 text-ar-accent' : 'border-ar-border text-ar-text-muted hover:border-ar-border-subtle hover:text-ar-text'}`}
+                className={`py-1.5 rounded-lg border text-xs transition-all capitalize ${gs.contourStyle === s ? 'bg-ar-accent/15 border-ar-accent/50 text-ar-accent shadow-[0_0_8px_rgba(0,229,255,0.2)]' : 'border-ar-border text-ar-text-muted hover:border-ar-border-subtle hover:text-ar-text'}`}
               >
                 {s.replace('-', ' ')}
               </button>
             ))}
           </div>
 
-          {/* Color preset */}
-          <p className="text-[10px] text-ar-text-muted uppercase tracking-widest mb-2 mt-3">Color</p>
+          <SectionLabel className="mt-3">Color</SectionLabel>
           <div className="flex flex-wrap gap-1">
             {(['cyber', 'vapor', 'solar', 'toxic', 'ice', 'blood', 'aurora', 'mono', 'phantom'] as const).map((c) => (
               <button
@@ -97,7 +137,7 @@ export default function StylePanel() {
 
       {/* Custom prompt */}
       <div>
-        <p className="text-[10px] text-ar-text-muted uppercase tracking-widest mb-1.5">Custom prompt</p>
+        <SectionLabel>Custom prompt</SectionLabel>
         <textarea
           value={customPrompt}
           onChange={(e) => setPrompt(e.target.value)}
@@ -117,7 +157,7 @@ export default function StylePanel() {
       </button>
 
       {showAdvanced && (
-        <div className="space-y-2 border-t border-ar-border pt-3">
+        <div className="space-y-2 border-t border-ar-border pt-3 animate-fade-up">
           {activeMode === 'restyle' && (
             <>
               {[

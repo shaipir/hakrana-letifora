@@ -5,6 +5,8 @@ import { Upload, Maximize2, Columns2, Layers, Crosshair, Grid, Sun, Square, X, C
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import { UploadedAsset, GridLayout, SelectedRegion } from '@/lib/types';
 import LoopPlayer from '@/components/canvas/LoopPlayer';
+import GridNoiseBg from '@/components/effects/GridNoiseBg';
+import OrbitLoader from '@/components/effects/OrbitLoader';
 
 // ─── Grid Face SVG Overlay ────────────────────────────────────────────────────
 
@@ -264,28 +266,33 @@ export default function CanvasArea() {
     >
       {/* Empty state */}
       {!source && !isUploading && (
-        <div className="relative w-56 h-56 cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
-          <span className="absolute top-0 left-0 w-7 h-7 border-t-2 border-l-2 border-ar-border/40 group-hover:border-ar-accent/70 transition-colors" />
-          <span className="absolute top-0 right-0 w-7 h-7 border-t-2 border-r-2 border-ar-border/40 group-hover:border-ar-accent/70 transition-colors" />
-          <span className="absolute bottom-0 left-0 w-7 h-7 border-b-2 border-l-2 border-ar-border/40 group-hover:border-ar-accent/70 transition-colors" />
-          <span className="absolute bottom-0 right-0 w-7 h-7 border-b-2 border-r-2 border-ar-border/40 group-hover:border-ar-accent/70 transition-colors" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <Upload className="w-6 h-6 text-ar-text-dim group-hover:text-ar-accent/60 transition-colors" />
-            <div className="text-center">
-              <p className="text-ar-text text-xs font-medium tracking-wide">Drop source image</p>
-              <p className="text-ar-text-dim text-[10px] mt-1.5 tracking-[0.12em] uppercase">JPEG · PNG · WebP · 20MB</p>
+        <>
+          <GridNoiseBg opacity={0.18} />
+          <div className="relative z-10 cursor-pointer group animate-fade-in" onClick={() => fileInputRef.current?.click()}>
+            {/* Corner bracket frame */}
+            <div className="relative w-52 h-52">
+              <span className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-ar-border/40 group-hover:border-ar-accent/70 transition-colors duration-300" />
+              <span className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-ar-border/40 group-hover:border-ar-accent/70 transition-colors duration-300" />
+              <span className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-ar-border/40 group-hover:border-ar-accent/70 transition-colors duration-300" />
+              <span className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-ar-border/40 group-hover:border-ar-accent/70 transition-colors duration-300" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-ar-surface border border-ar-border group-hover:border-ar-accent/40 group-hover:bg-ar-accent/5 transition-all duration-300 flex items-center justify-center">
+                  <Upload className="w-5 h-5 text-ar-text-dim group-hover:text-ar-accent/70 transition-colors duration-300" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-ar-text text-xs font-medium tracking-wide">Drop source image</p>
+                  <p className="text-ar-text-dim text-[10px] tracking-[0.12em] uppercase">JPEG · PNG · WebP · 20MB</p>
+                </div>
+              </div>
             </div>
           </div>
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f); }} />
-        </div>
+        </>
       )}
 
       {isUploading && (
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-ar-border border-t-ar-accent rounded-full animate-spin" />
-          <span className="text-ar-text-muted text-sm">Loading image...</span>
-        </div>
+        <OrbitLoader label="Loading image…" />
       )}
 
       {(uploadError || generateError) && (
@@ -375,16 +382,7 @@ export default function CanvasArea() {
       {source && !refProj.active && !generatedLoop && (
         <div className="relative w-full h-full flex items-center justify-center">
           {isLoadingAny ? (
-            <div className="relative rounded-sm overflow-hidden border border-ar-border/30 bg-ar-panel/40"
-              style={{ width: Math.min(source.width || 600, 800), height: Math.min(source.height || 400, 600), maxWidth: '80vw', maxHeight: '70vh' }}>
-              <div className={`absolute inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-ar-accent to-transparent animate-scanline opacity-80 ${activeMode === 'restyle' ? 'via-ar-violet' : activeMode === 'glow-sculpture' ? 'via-ar-accent' : 'via-orange-400'}`} />
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                <div className={`w-5 h-5 border border-ar-border/60 rounded-full animate-spin ${activeMode === 'restyle' ? 'border-t-ar-violet' : activeMode === 'glow-sculpture' ? 'border-t-ar-accent' : 'border-t-orange-400'}`} />
-                <span className="text-ar-text-dim text-[10px] tracking-[0.2em] uppercase">
-                  {isGeneratingLoop ? 'Building Loop' : 'Generating'}
-                </span>
-              </div>
-            </div>
+            <OrbitLoader label={isGeneratingLoop ? 'Building Loop…' : 'Generating…'} />
           ) : compareMode === 'side-by-side' && selectedResult ? (
             <div className="flex gap-2 w-full h-full items-center justify-center px-4">
               <div className="flex-1 flex flex-col items-center gap-1">

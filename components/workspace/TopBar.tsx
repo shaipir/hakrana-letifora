@@ -5,6 +5,7 @@ import { Upload, Zap, Download, RotateCcw, Layers, Settings, X, Eye, EyeOff, Mon
 import { sendProjectionState } from '@/lib/projection-bridge';
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import { UploadedAsset, GeneratedAsset, GeneratedLoop, GenerationHistoryItem } from '@/lib/types';
+import GlowButton from '@/components/ui/GlowButton';
 
 const GEMINI_KEY_STORAGE = 'artrevive_gemini_key';
 
@@ -355,16 +356,18 @@ export default function TopBar() {
         <div className="flex-1" />
 
         {/* Generate */}
-        <button
+        <GlowButton
           onClick={handleGenerate}
           disabled={!hasImage || isBusy}
-          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-medium tracking-wide transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 ${modeAccentClass}`}
+          size="sm"
+          variant={activeMode === 'restyle' ? 'primary' : 'primary'}
+          className={`tracking-wide ${activeMode === 'restyle' ? 'border-ar-violet/50 text-ar-violet bg-ar-violet/10 hover:bg-ar-violet/20 hover:shadow-[0_0_16px_rgba(139,92,246,0.35)]' : activeMode === 'house-projection' ? 'border-orange-500/40 text-orange-400 bg-orange-500/10 hover:bg-orange-500/20' : ''}`}
         >
           <Zap className={`w-3 h-3 ${isBusy ? 'animate-spin' : ''}`} />
           {isBusy
             ? (isGeneratingLoop ? 'Building Loop…' : 'Generating…')
             : isLoopMode ? 'Generate Loop' : 'Generate'}
-        </button>
+        </GlowButton>
 
         {/* Export */}
         <button
