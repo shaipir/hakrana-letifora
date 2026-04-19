@@ -2,13 +2,14 @@
 
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import { GeneratedAsset } from '@/lib/types';
-import { Download, Clock, Trash2, Film, Play } from 'lucide-react';
+import { Download, Clock, Trash2, Film, Play, Upload } from 'lucide-react';
 
 export default function HistoryPanel() {
   const {
     project, selectedResultId, selectResult,
     setExporting, removeGeneratedAsset,
     generatedLoop, loopHistory, setGeneratedLoop,
+    setUploadedAsset,
   } = useArtReviveStore();
   const { generatedAssets } = project;
 
@@ -93,6 +94,16 @@ export default function HistoryPanel() {
                         <p className="text-[10px] font-medium truncate capitalize">{loop.mode.replace('-', ' ')}</p>
                         <p className="text-[9px] text-ar-text-dim mt-0.5">{loop.frameCount} frames &middot; {new Date(loop.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (loop.frames[0]) setUploadedAsset({ id: loop.id, url: loop.frames[0], originalName: 'from-loop.png', mimeType: 'image/png', width: 0, height: 0, uploadedAt: new Date().toISOString() });
+                        }}
+                        className="p-1 rounded text-ar-text-dim hover:text-ar-accent transition-colors shrink-0"
+                        title="Use first frame as source"
+                      >
+                        <Upload className="w-3 h-3" />
+                      </button>
                       {isActive && (
                         <span className="w-1.5 h-1.5 rounded-full bg-ar-accent animate-pulse-dot shrink-0" />
                       )}
@@ -152,6 +163,17 @@ export default function HistoryPanel() {
 
                     {/* Hover actions */}
                     <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setUploadedAsset({ id: asset.id, url: asset.url, originalName: 'from-history.png', mimeType: 'image/png', width: 0, height: 0, uploadedAt: new Date().toISOString() });
+                        }}
+                        className="p-1.5 rounded-md bg-black/70 border border-white/10 text-ar-text-muted hover:text-ar-accent hover:bg-black/90 transition-colors"
+                        title="Use as source"
+                        aria-label="Use as source"
+                      >
+                        <Upload className="w-3 h-3" />
+                      </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); downloadAsset(asset); }}
                         className="p-1.5 rounded-md bg-black/70 border border-white/10 text-ar-text-muted hover:text-ar-text hover:bg-black/90 transition-colors"
