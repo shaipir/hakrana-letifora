@@ -93,32 +93,26 @@ export default function LoopPlayer({
   const transitionDuration = useBlend ? Math.round(frameIntervalMs * blendAmount) : 0;
 
   return (
-    <div className="flex flex-col items-center gap-3 w-full h-full">
-      {/* Image display — CSS opacity crossfade, no canvas */}
-      <div
-        className="flex-1 flex items-center justify-center w-full relative"
-        style={{ minHeight: '200px', maxHeight: '65vh' }}
-      >
-        {/* Stack all frames, show current via opacity */}
-        <div className="relative" style={{ width: '100%', maxWidth: '80vw', maxHeight: '65vh', aspectRatio: '4/3' }}>
-          {frames.map((src, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={i}
-              src={src}
-              alt={`Frame ${i + 1}`}
-              className="absolute inset-0 w-full h-full object-contain rounded-sm shadow-2xl"
-              style={{
-                opacity: i === currentFrame ? 1 : 0,
-                transition: transitionDuration > 0
-                  ? `opacity ${transitionDuration}ms ease-in-out`
-                  : 'none',
-              }}
-            />
-          ))}
-        </div>
+    <div className="relative w-full h-full flex flex-col">
+      {/* Frames — fill available space above controls */}
+      <div className="flex-1 relative overflow-hidden">
+        {frames.map((src, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={i}
+            src={src}
+            alt={`Frame ${i + 1}`}
+            className="absolute inset-0 w-full h-full object-contain"
+            style={{
+              opacity: i === currentFrame ? 1 : 0,
+              transition: transitionDuration > 0
+                ? `opacity ${transitionDuration}ms ease-in-out`
+                : 'none',
+            }}
+          />
+        ))}
 
-        {/* Badges */}
+        {/* Badges top-right */}
         <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
           {bpmSync?.enabled && (
             <div className="flex items-center gap-1 bg-ar-accent/20 border border-ar-accent/40 rounded px-2 py-0.5 text-xs text-ar-accent">
@@ -137,8 +131,8 @@ export default function LoopPlayer({
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="flex flex-col items-center gap-2 pb-2">
+      {/* Controls — always visible at bottom */}
+      <div className="flex flex-col items-center gap-2 py-3 bg-ar-panel/80 backdrop-blur-sm border-t border-ar-border/40 shrink-0">
         {/* Scrubber */}
         <input
           type="range" min={0} max={frames.length - 1} value={currentFrame}

@@ -366,7 +366,7 @@ export default function CanvasArea() {
 
       {/* Loop player */}
       {source && !refProj.active && generatedLoop && generatedLoop.frames.length > 0 && !isLoadingAny && (
-        <div className="w-full h-full flex flex-col relative">
+        <div className="absolute inset-0 flex flex-col">
           <button onClick={() => useArtReviveStore.getState().setGeneratedLoop(null)}
             className="absolute top-3 left-3 z-20 px-2 py-0.5 rounded text-[10px] bg-black/70 border border-ar-border/60 text-ar-text-dim hover:text-ar-text transition-colors">
             ← Stills
