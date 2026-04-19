@@ -234,9 +234,12 @@ export default function LoopControlsPanel() {
           {/* ── BPM Sync ─────────────────────────────────────────────────── */}
           <div className="border border-ar-border rounded-lg overflow-hidden">
             {/* BPM header toggle */}
-            <button
+            <div
+              role="button"
+              tabIndex={0}
               onClick={() => setBpmExpanded(!bpmExpanded)}
-              className="w-full flex items-center justify-between px-3 py-2.5 bg-ar-surface hover:bg-ar-border/30 transition-colors"
+              onKeyDown={(e) => e.key === 'Enter' && setBpmExpanded(!bpmExpanded)}
+              className="w-full flex items-center justify-between px-3 py-2.5 bg-ar-surface hover:bg-ar-border/30 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-2">
                 <Music className="w-3.5 h-3.5 text-ar-text-dim" />
@@ -264,7 +267,7 @@ export default function LoopControlsPanel() {
                 </button>
                 {bpmExpanded ? <ChevronDown className="w-3.5 h-3.5 text-ar-text-dim" /> : <ChevronUp className="w-3.5 h-3.5 text-ar-text-dim" />}
               </div>
-            </button>
+            </div>
 
             {bpmExpanded && (
               <div className="px-3 py-3 space-y-3 bg-ar-panel">
