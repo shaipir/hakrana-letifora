@@ -186,10 +186,17 @@ export default function StylePanel() {
           {activeMode === 'restyle' && (
             <>
               {[
-                { key: 'transformStrength' as const, label: 'Transform' },
-                { key: 'preserveStructure' as const, label: 'Preserve Structure' },
-                { key: 'fantasyStrength' as const, label: 'Fantasy' },
-                { key: 'atmosphereStrength' as const, label: 'Atmosphere' },
+                { key: 'transformStrength' as const,    label: 'Transform' },
+                { key: 'preserveStructure' as const,    label: 'Structure' },
+                { key: 'identityPreservation' as const, label: 'Identity' },
+                { key: 'facePreservation' as const,     label: 'Face' },
+                { key: 'posePreservation' as const,     label: 'Pose' },
+                { key: 'fantasyStrength' as const,      label: 'Fantasy' },
+                { key: 'atmosphereStrength' as const,   label: 'Atmosphere' },
+                { key: 'redesignMaterials' as const,    label: 'Materials' },
+                { key: 'redesignEnvironment' as const,  label: 'Environment' },
+                { key: 'realismVsStylization' as const, label: 'Realism ↔ Style' },
+                { key: 'reshapeStrength' as const,      label: 'Reshape' },
               ].map(({ key, label }) => (
                 <div key={key} className="flex items-center gap-2">
                   <span className="text-[10px] text-ar-text-muted w-28 shrink-0">{label}</span>
@@ -199,16 +206,32 @@ export default function StylePanel() {
                   <span className="text-[10px] text-ar-text-dim w-6 text-right font-mono">{Math.round(rs[key] * 100)}</span>
                 </div>
               ))}
+              {/* Custom reshape prompt */}
+              <div className="pt-1">
+                <p className="text-[10px] text-ar-text-muted mb-1">Reshape prompt</p>
+                <textarea
+                  value={rs.customReshapePrompt}
+                  onChange={(e) => updateRestyleSettings({ customReshapePrompt: e.target.value })}
+                  placeholder="Describe reshape direction…"
+                  rows={2}
+                  className="w-full bg-ar-surface border border-ar-border rounded px-2 py-1.5 text-xs text-ar-text placeholder:text-ar-text-dim resize-none focus:outline-none focus:border-ar-accent/50 transition-colors"
+                />
+              </div>
             </>
           )}
 
           {activeMode === 'house-projection' && (
             <>
               {[
-                { key: 'geometryPreservation' as const, label: 'Geometry' },
-                { key: 'facadePreservation' as const, label: 'Facade' },
+                { key: 'geometryPreservation' as const,          label: 'Geometry' },
+                { key: 'facadePreservation' as const,            label: 'Facade' },
+                { key: 'windowAlignmentPreservation' as const,   label: 'Windows' },
                 { key: 'surfaceTransformationStrength' as const, label: 'Transform' },
-                { key: 'projectionIntensity' as const, label: 'Intensity' },
+                { key: 'projectionIntensity' as const,           label: 'Intensity' },
+                { key: 'glowAmount' as const,                    label: 'Glow' },
+                { key: 'darknessContrast' as const,              label: 'Darkness' },
+                { key: 'ornamentationLevel' as const,            label: 'Ornamentation' },
+                { key: 'atmosphereStrength' as const,            label: 'Atmosphere' },
               ].map(({ key, label }) => (
                 <div key={key} className="flex items-center gap-2">
                   <span className="text-[10px] text-ar-text-muted w-28 shrink-0">{label}</span>

@@ -72,22 +72,14 @@ export async function POST(req: NextRequest) {
       errors.push('no API key');
     }
 
-    // ── Fallback: Return Pollinations URL directly (browser fetches it) ────
-    const encoded = encodeURIComponent(transformPrompt.slice(0, 500));
-    const seed = Math.floor(Math.random() * 99999);
-    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
-
-    console.log('HOUSE_PROJECTION_PROVIDER', 'pollinations');
-    console.log('HOUSE_PROJECTION_MODEL', 'flux');
-    console.log('HOUSE_PROJECTION_FALLBACK', true);
-
+    // House projection REQUIRES image-to-image — no text-only fallback
+    // (text-only would generate a random unrelated house)
     return NextResponse.json({
-      pollinationsUrl,
-      provider: 'pollinations',
-      model: 'flux',
-      fallback: true,
-      fallbackReason: errors.join('; '),
-    });
+      error: errors.length
+        ? `House projection requires a Gemini API key (image-to-image only). Errors: ${errors.join('; ')}`
+        : 'House projection requires a Gemini API key.',
+      requiresApiKey: true,
+    }, { status: 422 });
 
   } catch (err: any) {
     console.error('[house-projection] unhandled:', err);
