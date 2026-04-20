@@ -83,25 +83,10 @@ export async function POST(req: NextRequest) {
       errors.push('no API key');
     }
 
-    // ── Fallback: Pollinations URL returned directly to client ─────────────
-    // Client fetches the image directly — no server timeout issue
-    const encodedPrompt = encodeURIComponent(transformPrompt.slice(0, 500));
-    const seed = Math.floor(Math.random() * 99999);
-    const pollUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
-
-    console.log('WORLD_TRANSFORM_PROVIDER', 'pollinations');
-    console.log('WORLD_TRANSFORM_MODEL', 'flux');
-    console.log('FALLBACK_USED', true);
-
-    return NextResponse.json({
-      // Return the URL directly — browser loads it (no server fetch timeout)
-      pollinationsUrl: pollUrl,
-      motionHint,
-      provider: 'pollinations',
-      model: 'flux',
-      fallback: true,
-      fallbackReason: errors.join('; '),
-    });
+    // ── No fallback — log error and return failure ─────────────────────────
+    const errorMsg = errors.join('; ');
+    console.error('[world-transform] Generation failed:', errorMsg);
+    return NextResponse.json({ error: `Generation failed: ${errorMsg}` }, { status: 502 });
 
   } catch (err: any) {
     console.error('[world-transform] unhandled:', err);

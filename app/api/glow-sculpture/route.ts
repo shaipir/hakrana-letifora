@@ -71,21 +71,10 @@ export async function POST(req: NextRequest) {
       errors.push('no API key');
     }
 
-    const encoded = encodeURIComponent(transformPrompt.slice(0, 500));
-    const seed = Math.floor(Math.random() * 99999);
-    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
-
-    console.log('GLOW_SCULPTURE_PROVIDER', 'pollinations');
-    console.log('GLOW_SCULPTURE_FALLBACK', true);
-
-    return NextResponse.json({
-      pollinationsUrl,
-      motionHint,
-      provider: 'pollinations',
-      model: 'flux',
-      fallback: true,
-      fallbackReason: errors.join('; '),
-    });
+    // ── No fallback — log error and return failure ─────────────────────────
+    const errorMsg = errors.join('; ');
+    console.error('[glow-sculpture] Generation failed:', errorMsg);
+    return NextResponse.json({ error: `Generation failed: ${errorMsg}` }, { status: 502 });
 
   } catch (err: any) {
     console.error('[glow-sculpture] unhandled:', err);

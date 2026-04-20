@@ -119,31 +119,37 @@ export async function POST(req: NextRequest) {
           )
         );
 
+        const failedFrames: number[] = [];
         batchResults.forEach((result, i) => {
           const frameIdx = batchIndices[i];
           if (result.status === 'fulfilled' && result.value.url) {
             frames[frameIdx] = result.value.url;
           } else {
-            // Fallback frame: return pollinations URL for this frame's prompt
-            const encoded = encodeURIComponent(framePrompts[frameIdx].slice(0, 500));
-            const seed = Math.floor(Math.random() * 99999);
-            frames[frameIdx] = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
+            const reason = result.status === 'rejected' ? result.reason?.message : 'no url returned';
+            console.error(`[generate-loop] Frame ${frameIdx} failed:`, reason);
+            failedFrames.push(frameIdx);
           }
         });
+
+        if (failedFrames.length > 0) {
+          console.error('[generate-loop] Failed frames:', failedFrames.length, '/', batchIndices.length);
+        }
       }
     } else {
-      // No API key — return Pollinations URLs for all frames
-      for (let i = 0; i < frameCount; i++) {
-        const encoded = encodeURIComponent(framePrompts[i].slice(0, 500));
-        const seed = Math.floor(Math.random() * 99999);
-        frames[i] = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
-      }
+      // No API key — return error
+      console.error('[generate-loop] No API key provided');
+      return NextResponse.json({ error: 'Generation failed: no API key' }, { status: 400 });
     }
 
-    console.log('LOOP_GEN_FRAMES_GENERATED', frames.filter(f => f.startsWith('data:')).length);
-    console.log('LOOP_GEN_POLLINATIONS_FALLBACKS', frames.filter(f => f.includes('pollinations')).length);
+    // Filter out empty frames
+    const successFrames = frames.filter((f) => f.length > 0);
+    if (successFrames.length === 0) {
+      console.error('[generate-loop] All frames failed to generate');
+      return NextResponse.json({ error: 'Generation failed: all frames failed' }, { status: 502 });
+    }
 
-    return NextResponse.json({ frames, frameCount, motionType: loopSettings.motionType });
+    console.log('[generate-loop] Frames generated:', successFrames.length, '/', frameCount);
+    return NextResponse.json({ frames: successFrames, frameCount: successFrames.length, motionType: loopSettings.motionType });
 
   } catch (err: any) {
     console.error('[generate-loop] unhandled:', err);

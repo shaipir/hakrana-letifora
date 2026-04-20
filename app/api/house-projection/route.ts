@@ -72,22 +72,10 @@ export async function POST(req: NextRequest) {
       errors.push('no API key');
     }
 
-    // ── Fallback: Return Pollinations URL directly (browser fetches it) ────
-    const encoded = encodeURIComponent(transformPrompt.slice(0, 500));
-    const seed = Math.floor(Math.random() * 99999);
-    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
-
-    console.log('HOUSE_PROJECTION_PROVIDER', 'pollinations');
-    console.log('HOUSE_PROJECTION_MODEL', 'flux');
-    console.log('HOUSE_PROJECTION_FALLBACK', true);
-
-    return NextResponse.json({
-      pollinationsUrl,
-      provider: 'pollinations',
-      model: 'flux',
-      fallback: true,
-      fallbackReason: errors.join('; '),
-    });
+    // ── No fallback — log error and return failure ─────────────────────────
+    const errorMsg = errors.join('; ');
+    console.error('[house-projection] Generation failed:', errorMsg);
+    return NextResponse.json({ error: `Generation failed: ${errorMsg}` }, { status: 502 });
 
   } catch (err: any) {
     console.error('[house-projection] unhandled:', err);

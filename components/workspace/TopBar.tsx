@@ -145,14 +145,7 @@ export default function TopBar() {
         catch { throw new Error(`Server error (${res.status}): ${text.slice(0, 200)}`); }
         if (!res.ok) throw new Error(json?.error ?? `Loop failed (${res.status})`);
 
-        let resolvedFrames = await Promise.all(
-          (json.frames as string[]).map(async (f: string) => {
-            if (f.startsWith('http')) {
-              try { return await loadPollinationsUrl(f); } catch { return f; }
-            }
-            return f;
-          })
-        );
+        let resolvedFrames = json.frames as string[];
 
         // Align frames to original building position
         if (originalBounds) {
@@ -200,8 +193,8 @@ export default function TopBar() {
         const json = await safePost('/api/world-transform', {
           imageBase64, mimeType, settings: project.restyleSettings, apiKey: storedKey || undefined,
         });
-        if (json.fallback) setGenerateError(`⚠ Gemini fallback: ${json.fallbackReason}`);
-        let resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
+        let resultUrl = json.url;
+        if (!resultUrl) throw new Error(json.error ?? 'No image returned');
         if (originalBounds) resultUrl = await alignFrame(resultUrl, originalBounds);
         addGeneratedAsset({ id: crypto.randomUUID(), url: resultUrl, mode: 'restyle',
           settings: project.restyleSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
@@ -210,8 +203,8 @@ export default function TopBar() {
         const json = await safePost('/api/glow-sculpture', {
           imageBase64, mimeType, settings: project.glowSculptureSettings, apiKey: storedKey || undefined,
         });
-        if (json.fallback) setGenerateError(`⚠ Gemini fallback: ${json.fallbackReason}`);
-        let resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
+        let resultUrl = json.url;
+        if (!resultUrl) throw new Error(json.error ?? 'No image returned');
         if (originalBounds) resultUrl = await alignFrame(resultUrl, originalBounds);
         addGeneratedAsset({ id: crypto.randomUUID(), url: resultUrl, mode: 'glow-sculpture',
           settings: project.glowSculptureSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
@@ -220,8 +213,8 @@ export default function TopBar() {
         const json = await safePost('/api/house-projection', {
           imageBase64, mimeType, settings: project.houseProjectionSettings, apiKey: storedKey || undefined,
         });
-        if (json.fallback) setGenerateError(`⚠ Gemini fallback: ${json.fallbackReason}`);
-        let resultUrl = json.url ?? await loadPollinationsUrl(json.pollinationsUrl);
+        let resultUrl = json.url;
+        if (!resultUrl) throw new Error(json.error ?? 'No image returned');
         if (originalBounds) resultUrl = await alignFrame(resultUrl, originalBounds);
         addGeneratedAsset({ id: crypto.randomUUID(), url: resultUrl, mode: 'house-projection',
           settings: project.houseProjectionSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
