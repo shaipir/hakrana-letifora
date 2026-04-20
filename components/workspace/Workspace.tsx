@@ -3,6 +3,10 @@
 import { useMappingStore } from '@/lib/mapping-store';
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import ModeTabBar from '@/components/mapping/ModeTabBar';
+import DrawingToolbar from '@/components/mapping/DrawingToolbar';
+import ShapeLibrary from '@/components/mapping/ShapeLibrary';
+import SurfacePanel from '@/components/mapping/SurfacePanel';
+import MapCanvas from '@/components/mapping/MapCanvas';
 import TopBar from './TopBar';
 import RestylePanel from './RestylePanel';
 import GlowSculpturePanel from './GlowSculpturePanel';
@@ -37,9 +41,14 @@ export default function Workspace() {
           </>
         )}
         {activeTab === 'map' && (
-          <div className="flex flex-1 items-center justify-center text-ar-text-muted text-sm">
-            Map tab — coming next
-          </div>
+          <>
+            <div className="w-[240px] flex flex-col shrink-0 overflow-y-auto border-r border-ar-border bg-ar-panel">
+              <DrawingToolbar />
+              <ShapeLibrary />
+              <SurfacePanel />
+            </div>
+            <MapCanvas />
+          </>
         )}
         {activeTab === 'warp' && (
           <div className="flex flex-1 items-center justify-center text-ar-text-muted text-sm">
