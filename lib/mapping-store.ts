@@ -464,6 +464,22 @@ export function syncContentFromArtRevive() {
     }
   }
 
+  // Include generated loop as animated content item
+  const loop = artState.generatedLoop;
+  if (loop && loop.frames.length > 0 && !existingIds.has(loop.id)) {
+    const item: ContentItem = {
+      id: loop.id,
+      url: loop.frames[0],
+      name: `Loop: ${loop.motionType} (${loop.frames.length} frames)`,
+      sourceMode: loop.mode,
+      frames: loop.frames,
+      fps: 10,
+    };
+    console.log('[MAPPING:Store] Adding loop as animated content item:', item.id, item.name);
+    store.addContentItem(item);
+    newItems.push(item);
+  }
+
   console.log('[MAPPING:Store] Sync complete — new items added:', newItems.length);
 
   // Auto-assign latest content to surfaces that have no content

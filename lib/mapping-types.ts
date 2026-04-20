@@ -47,6 +47,8 @@ export interface ContentItem {
   url: string;
   name: string;
   sourceMode: string;
+  frames?: string[];   // loop frames — if present, content is animated
+  fps?: number;        // playback speed for loop frames
 }
 
 export interface DetectedZone {

@@ -12,6 +12,9 @@ export default function LiveCanvas() {
   const lastFrameRef = useRef<ImageData | null>(null);
   // Track loaded content images by contentId
   const imageCache = useRef<Map<string, HTMLImageElement>>(new Map());
+  // Track loop frame indices per content item
+  const loopFrameIndex = useRef<Map<string, number>>(new Map());
+  const loopLastAdvance = useRef<Map<string, number>>(new Map());
 
   const store = useMappingStore;
 
@@ -88,18 +91,33 @@ export default function LiveCanvas() {
         if (project.contentItems.length === 0) {
           console.warn('[MAPPING:LiveCanvas] No content items available in project');
         }
+        const now = performance.now();
         for (const surf of project.surfaces) {
           if (!surf.visible) continue;
           if (!surf.contentId) {
-            console.warn('[MAPPING:LiveCanvas] Surface has no contentId:', surf.id, surf.name);
             continue;
           }
           const content = project.contentItems.find((c) => c.id === surf.contentId);
           if (!content) {
-            console.warn('[MAPPING:LiveCanvas] contentId not found in contentItems for surface:', surf.id, surf.name, 'contentId:', surf.contentId);
             continue;
           }
-          const img = getImage(content.id, content.url);
+
+          // Determine current frame URL for animated content
+          let frameUrl = content.url;
+          if (content.frames && content.frames.length > 1) {
+            const fps = content.fps || 10;
+            const intervalMs = 1000 / fps;
+            const lastTime = loopLastAdvance.current.get(content.id) || 0;
+            let idx = loopFrameIndex.current.get(content.id) || 0;
+            if (now - lastTime >= intervalMs) {
+              idx = (idx + 1) % content.frames.length;
+              loopFrameIndex.current.set(content.id, idx);
+              loopLastAdvance.current.set(content.id, now);
+            }
+            frameUrl = content.frames[idx];
+          }
+
+          const img = getImage(content.id + '_' + frameUrl.slice(-20), frameUrl);
           if (!img.complete || img.naturalWidth === 0) continue;
 
           const alpha = surf.opacity * masterOpacity;
@@ -111,7 +129,20 @@ export default function LiveCanvas() {
         // If no surfaces with content, show latest content item as preview
         if (project.surfaces.every((s) => !s.contentId) && project.contentItems.length > 0) {
           const latest = project.contentItems[project.contentItems.length - 1];
-          const img = getImage(latest.id, latest.url);
+          let previewUrl = latest.url;
+          if (latest.frames && latest.frames.length > 1) {
+            const fps = latest.fps || 10;
+            const intervalMs = 1000 / fps;
+            const lastTime = loopLastAdvance.current.get(latest.id) || 0;
+            let idx = loopFrameIndex.current.get(latest.id) || 0;
+            if (now - lastTime >= intervalMs) {
+              idx = (idx + 1) % latest.frames.length;
+              loopFrameIndex.current.set(latest.id, idx);
+              loopLastAdvance.current.set(latest.id, now);
+            }
+            previewUrl = latest.frames[idx];
+          }
+          const img = getImage(latest.id + '_' + previewUrl.slice(-20), previewUrl);
           if (img.complete && img.naturalWidth > 0) {
             ctx.globalAlpha = masterOpacity;
             ctx.drawImage(img, 0, 0, W, H);
