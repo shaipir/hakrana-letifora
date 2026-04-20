@@ -200,7 +200,8 @@ export default function TopBar() {
       }
 
       // Call Gemini directly from browser — no Vercel timeout
-      const result = await generateImageWithGemini(storedKey, imageBase64, mimeType, prompt);
+      const sizeInstruction = `CRITICAL: Output image MUST have the EXACT SAME dimensions (width and height in pixels) as the input image. Do NOT resize, crop, or change the resolution.`;
+      const result = await generateImageWithGemini(storedKey, imageBase64, mimeType, `${sizeInstruction} ${prompt}`);
       let resultUrl = result.url;
       if (originalBounds) resultUrl = await alignFrame(resultUrl, originalBounds);
 

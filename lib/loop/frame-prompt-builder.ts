@@ -76,6 +76,7 @@ export function buildFrameMotionPrompt(
   return [
     basePrompt,
     `ANIMATION FRAME ${frameIndex + 1} OF ${totalFrames}.`,
+    `CRITICAL: Output image MUST have the EXACT SAME dimensions (width and height in pixels) as the input image. Do NOT resize, crop, or change the resolution.`,
     `CRITICAL: Maintain IDENTICAL subject pose, silhouette, composition, and identity from the reference. Only motion state changes.`,
     `Motion state: ${phaseDesc}.`,
     `Motion intensity: ${intensityDesc}.`,

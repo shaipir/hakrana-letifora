@@ -30,7 +30,7 @@ async function generateFrame(
           contents: [{
             parts: [
               { inlineData: { mimeType: mimeType, data: imageBase64 } },
-              { text: prompt },
+              { text: `CRITICAL: Output image MUST have the EXACT SAME dimensions (width and height in pixels) as the input image. Do NOT resize, crop, or change the resolution. ${prompt}` },
             ],
           }],
           generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
