@@ -1,7 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Google Gemini API - Image Generation & Editing (Imagen 3)
-// Free tier via Google AI Studio: aistudio.google.com
+// Stable image model (Nano Banana) — the free-tier path for actual image output.
+// Note: gemini-2.5-flash (base Flash) is text-only and cannot return images.
+// See https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash-image
+const IMAGE_MODEL = 'gemini-2.5-flash-image';
+
+type InlineImagePart = {
+  inlineData?: { data: string; mimeType?: string };
+  inline_data?: { data: string; mime_type?: string };
+};
+
+function pickImageFromParts(parts: InlineImagePart[]) {
+  for (const p of parts) {
+    const id = p.inlineData ?? p.inline_data;
+    if (!id?.data) continue;
+    const mime = id.mimeType ?? id.mime_type ?? 'image/png';
+    if (mime.startsWith('image/')) {
+      return { data: id.data, mime };
+    }
+  }
+  return null;
+}
+
+function parseErrorBody(raw: string): { code?: number; message?: string } {
+  try {
+    const j = JSON.parse(raw) as { error?: { code?: number; message?: string } };
+    return j.error ?? {};
+  } catch {
+    return {};
+  }
+}
+
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const prompt = formData.get('prompt') as string;
@@ -14,112 +43,97 @@ export async function POST(req: NextRequest) {
 
   const fullPrompt = `Projection mapping visual art for ${regionLabel || 'a surface'}. Style: ${style || prompt}. Dark/black background, high contrast, dramatic lighting, suitable for projection. ${prompt}`;
 
-  try {
-    let body: object;
-    let imageBase64: string | null = null;
-    let imageMime = 'image/jpeg';
+  let body: object;
 
-    // If image provided — use Gemini for image editing (inpainting style)
-    if (imageFile) {
-      const bytes = await imageFile.arrayBuffer();
-      imageBase64 = Buffer.from(bytes).toString('base64');
-      imageMime = imageFile.type || 'image/jpeg';
-    }
-
-    if (imageBase64) {
-      // Gemini 2.0 Flash with image input + generation
-      body = {
-        contents: [{
+  if (imageFile) {
+    const bytes = await imageFile.arrayBuffer();
+    const imageBase64 = Buffer.from(bytes).toString('base64');
+    const imageMime = imageFile.type || 'image/jpeg';
+    body = {
+      contents: [
+        {
           parts: [
             {
               inline_data: {
                 mime_type: imageMime,
                 data: imageBase64,
-              }
+              },
             },
             {
-              text: `Transform this image into a projection mapping visual. ${fullPrompt}. Keep the subject recognizable but apply dramatic visual effects. Black background. High contrast colors.`
-            }
-          ]
-        }],
-        generationConfig: {
-          responseModalities: ['IMAGE', 'TEXT'],
-          temperature: 0.9,
-        }
-      };
-    } else {
-      // Text-to-image generation
-      body = {
-        contents: [{ parts: [{ text: fullPrompt }] }],
-        generationConfig: {
-          responseModalities: ['IMAGE', 'TEXT'],
-          temperature: 0.9,
-        }
-      };
-    }
+              text: `Transform this image into a projection mapping visual. ${fullPrompt}. Keep the subject recognizable but apply dramatic visual effects. Black background. High contrast colors.`,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        responseModalities: ['TEXT', 'IMAGE'],
+        temperature: 0.9,
+      },
+    };
+  } else {
+    body = {
+      contents: [{ parts: [{ text: fullPrompt }] }],
+      generationConfig: {
+        responseModalities: ['TEXT', 'IMAGE'],
+        temperature: 0.9,
+      },
+    };
+  }
 
-    // Try Gemini 2.0 Flash (image generation)
-    const model = 'gemini-2.5-flash-preview-04-17';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:generateContent?key=${apiKey}`;
 
-    const res = await fetch(url, {
+  let res: Response;
+  let raw: string;
+  try {
+    res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-
-    if (!res.ok) {
-      const err = await res.text();
-      // Try fallback to Imagen 3
-      return tryImagen3(apiKey, fullPrompt);
-    }
-
-    const data = await res.json();
-
-    // Extract generated image from response
-    const parts = data.candidates?.[0]?.content?.parts ?? [];
-    const imagePart = parts.find((p: { inlineData?: { data: string; mimeType: string } }) => p.inlineData?.mimeType?.startsWith('image/'));
-
-    if (imagePart?.inlineData) {
-      return NextResponse.json({
-        imageBase64: imagePart.inlineData.data,
-        mimeType: imagePart.inlineData.mimeType,
-        imageUrl: `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`,
-      });
-    }
-
-    return tryImagen3(apiKey, fullPrompt);
+    raw = await res.text();
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });
   }
-}
 
-async function tryImagen3(apiKey: string, prompt: string) {
-  // Fallback: Imagen 3 via Google AI Studio
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      instances: [{ prompt }],
-      parameters: { sampleCount: 1, aspectRatio: '16:9' },
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    return NextResponse.json({ error: `Google API error: ${err}` }, { status: 500 });
+  if (res.status === 429) {
+    const first = parseErrorBody(raw);
+    return NextResponse.json(
+      {
+        error:
+          'נגמרה מכסת יצירת התמונה בחשבון Google (בדרך כלל לדקה או ליום בשכבה החינמית). ' +
+          'אפשר לחכות ולנסות שוב, לבדוק מכסות בקישורים למטה, או להפעיל חיוב ב-Google.',
+        errorCode: 'GEMINI_QUOTA_EXCEEDED',
+        detailsUrl: 'https://ai.google.dev/gemini-api/docs/rate-limits',
+        billingUrl: 'https://ai.google.dev/gemini-api/docs/billing',
+        upstreamMessage: first.message,
+      },
+      { status: 429 },
+    );
   }
 
-  const data = await res.json();
-  const pred = data.predictions?.[0];
-  if (pred?.bytesBase64Encoded) {
+  if (!res.ok) {
+    return NextResponse.json(
+      { error: `Google API error (${IMAGE_MODEL}): ${raw}` },
+      { status: 500 },
+    );
+  }
+
+  const data = JSON.parse(raw) as {
+    candidates?: Array<{ content?: { parts?: InlineImagePart[] } }>;
+  };
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  const img = pickImageFromParts(parts);
+
+  if (img) {
     return NextResponse.json({
-      imageBase64: pred.bytesBase64Encoded,
-      mimeType: pred.mimeType || 'image/png',
-      imageUrl: `data:${pred.mimeType || 'image/png'};base64,${pred.bytesBase64Encoded}`,
+      imageBase64: img.data,
+      mimeType: img.mime,
+      imageUrl: `data:${img.mime};base64,${img.data}`,
     });
   }
 
-  return NextResponse.json({ error: 'No image generated' }, { status: 500 });
+  return NextResponse.json(
+    { error: `${IMAGE_MODEL}: no image in model response` },
+    { status: 500 },
+  );
 }

@@ -4,6 +4,7 @@ import {
   RestyleSettings, GlowSculptureSettings, HouseProjectionSettings,
   LoopSettings, GeneratedLoop,
 } from './types';
+import { BuildingBounds } from './alignment/edge-register';
 
 export const DEFAULT_RESTYLE_SETTINGS: RestyleSettings = {
   mode: 'preserve-characters',
@@ -91,6 +92,7 @@ interface ArtReviveState {
   activeMode: ArtReviveMode;
   selectedResultId: string | null;
   generatedLoop: GeneratedLoop | null;
+  originalBounds: BuildingBounds | null;
   isUploading: boolean;
   isGenerating: boolean;
   isGeneratingLoop: boolean;
@@ -100,6 +102,7 @@ interface ArtReviveState {
 
   setMode: (mode: ArtReviveMode) => void;
   setUploadedAsset: (asset: UploadedAsset) => void;
+  setOriginalBounds: (bounds: BuildingBounds | null) => void;
   clearUploadedAsset: () => void;
   updateRestyleSettings: (settings: Partial<RestyleSettings>) => void;
   updateGlowSculptureSettings: (settings: Partial<GlowSculptureSettings>) => void;
@@ -122,6 +125,7 @@ export const useArtReviveStore = create<ArtReviveState>((set) => ({
   activeMode: 'restyle',
   selectedResultId: null,
   generatedLoop: null,
+  originalBounds: null,
   isUploading: false,
   isGenerating: false,
   isGeneratingLoop: false,
@@ -135,6 +139,8 @@ export const useArtReviveStore = create<ArtReviveState>((set) => ({
       project: { ...s.project, activeMode: mode, updatedAt: new Date().toISOString() },
     })),
 
+  setOriginalBounds: (bounds) => set({ originalBounds: bounds }),
+
   setUploadedAsset: (asset) =>
     set((s) => ({
       project: {
@@ -145,6 +151,7 @@ export const useArtReviveStore = create<ArtReviveState>((set) => ({
       },
       selectedResultId: null,
       generatedLoop: null,
+      originalBounds: null,
       uploadError: null,
     })),
 
@@ -221,6 +228,7 @@ export const useArtReviveStore = create<ArtReviveState>((set) => ({
       activeMode: 'restyle',
       selectedResultId: null,
       generatedLoop: null,
+      originalBounds: null,
       isUploading: false,
       isGenerating: false,
       isGeneratingLoop: false,
