@@ -482,13 +482,16 @@ export function syncContentFromArtRevive() {
 
   console.log('[MAPPING:Store] Sync complete — new items added:', newItems.length);
 
+  // Re-read fresh state after mutations
+  const freshState = useMappingStore.getState();
+
   // Auto-assign latest content to surfaces that have no content
-  const latestContent = store.project.contentItems.at(-1);
+  const latestContent = freshState.project.contentItems.at(-1);
   if (latestContent) {
-    for (const surface of store.project.surfaces) {
+    for (const surface of freshState.project.surfaces) {
       if (!surface.contentId) {
         console.log('[MAPPING:Store] Auto-assigning content', latestContent.id, '(', latestContent.name, ') to surface:', surface.id, surface.name);
-        store.assignContent(surface.id, latestContent.id);
+        freshState.assignContent(surface.id, latestContent.id);
       }
     }
   } else {

@@ -13,8 +13,6 @@ interface LoopPlayerProps {
 export default function LoopPlayer({ frames, fps = 10, autoPlay = true }: LoopPlayerProps) {
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isPlaying, setIsPlaying] = useState(autoPlay);
-  const [speed, setSpeed] = useState(1);
-  const [useBpm, setUseBpm] = useState(false);
   const [bpm, setBpm] = useState(120);
   const [isExporting, setIsExporting] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -22,19 +20,18 @@ export default function LoopPlayer({ frames, fps = 10, autoPlay = true }: LoopPl
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (isPlaying && frames.length > 1) {
-      // BPM mode: one frame per beat. Speed mode: fps * multiplier.
-      const intervalMs = useBpm ? (60000 / bpm) : (1000 / fps) / speed;
+      const intervalMs = 60000 / bpm;
       intervalRef.current = setInterval(() => {
         setCurrentFrame((f) => (f + 1) % frames.length);
       }, intervalMs);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [isPlaying, fps, speed, useBpm, bpm, frames.length]);
+  }, [isPlaying, bpm, frames.length]);
 
   async function handleExportWebM() {
     setIsExporting(true);
     try {
-      const url = await assembleWebM(frames, fps * speed);
+      const url = await assembleWebM(frames, bpm / 60);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'artrevive-loop.webm';
@@ -49,7 +46,7 @@ export default function LoopPlayer({ frames, fps = 10, autoPlay = true }: LoopPl
   async function handleExportGif() {
     setIsExporting(true);
     try {
-      const url = await assembleGif(frames, fps * speed);
+      const url = await assembleGif(frames, bpm / 60);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'artrevive-loop.gif';
@@ -109,47 +106,18 @@ export default function LoopPlayer({ frames, fps = 10, autoPlay = true }: LoopPl
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
 
-          {/* Speed / BPM toggle */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setUseBpm(false)}
-              className={`px-1.5 py-1 rounded text-xs transition-colors ${!useBpm ? 'text-ar-accent' : 'text-ar-text-muted hover:text-ar-text'}`}
-            >
-              Speed
-            </button>
-            <button
-              onClick={() => setUseBpm(true)}
-              className={`px-1.5 py-1 rounded text-xs transition-colors ${useBpm ? 'text-ar-accent' : 'text-ar-text-muted hover:text-ar-text'}`}
-            >
-              BPM
-            </button>
+          {/* BPM control */}
+          <div className="flex items-center gap-1.5 text-xs">
+            <input
+              type="number"
+              min={20}
+              max={300}
+              value={bpm}
+              onChange={(e) => setBpm(Math.max(20, Math.min(300, Number(e.target.value))))}
+              className="w-14 px-1.5 py-1 rounded border border-ar-border bg-ar-surface text-ar-text text-center"
+            />
+            <span className="text-ar-text-muted">BPM</span>
           </div>
-
-          {!useBpm ? (
-            <div className="flex rounded border border-ar-border overflow-hidden text-xs">
-              {[0.5, 1, 2].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setSpeed(s)}
-                  className={`px-2 py-1 transition-colors ${speed === s ? 'bg-ar-accent/20 text-ar-accent' : 'text-ar-text-muted hover:text-ar-text'}`}
-                >
-                  {s}x
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-center gap-1 text-xs">
-              <input
-                type="number"
-                min={20}
-                max={300}
-                value={bpm}
-                onChange={(e) => setBpm(Math.max(20, Math.min(300, Number(e.target.value))))}
-                className="w-14 px-1.5 py-1 rounded border border-ar-border bg-ar-surface text-ar-text text-center"
-              />
-              <span className="text-ar-text-muted">bpm</span>
-            </div>
-          )}
 
           {/* Export */}
           <div className="flex gap-1">

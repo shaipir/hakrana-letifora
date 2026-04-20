@@ -41,21 +41,28 @@ export default function LiveCanvas() {
   }, []);
 
   // ── Image loader helper ────────────────────────────────────────────────────
-  const getImage = useCallback((id: string, url: string): HTMLImageElement => {
+  const getImage = useCallback((url: string): HTMLImageElement => {
     const cache = imageCache.current;
-    if (cache.has(id)) return cache.get(id)!;
-    console.log('[MAPPING:LiveCanvas] Loading content image id:', id, 'url:', url.slice(0, 80));
+    if (cache.has(url)) return cache.get(url)!;
     const img = new Image();
-    img.onload = () => {
-      console.log('[MAPPING:LiveCanvas] Content image loaded OK id:', id, img.naturalWidth, 'x', img.naturalHeight);
-    };
-    img.onerror = (err) => {
-      console.error('[MAPPING:LiveCanvas] Content image failed to load id:', id, 'url:', url.slice(0, 80), err);
-    };
     img.src = url;
-    cache.set(id, img);
+    cache.set(url, img);
     return img;
   }, []);
+
+  // Preload all loop frames when content items change
+  useEffect(() => {
+    const { project } = store.getState();
+    for (const item of project.contentItems) {
+      if (item.frames) {
+        for (const frameUrl of item.frames) {
+          getImage(frameUrl);
+        }
+      } else {
+        getImage(item.url);
+      }
+    }
+  });
 
   // ── Render loop ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -117,7 +124,7 @@ export default function LiveCanvas() {
             frameUrl = content.frames[idx];
           }
 
-          const img = getImage(content.id + '_' + frameUrl.slice(-20), frameUrl);
+          const img = getImage(frameUrl);
           if (!img.complete || img.naturalWidth === 0) continue;
 
           const alpha = surf.opacity * masterOpacity;
@@ -142,7 +149,7 @@ export default function LiveCanvas() {
             }
             previewUrl = latest.frames[idx];
           }
-          const img = getImage(latest.id + '_' + previewUrl.slice(-20), previewUrl);
+          const img = getImage(previewUrl);
           if (img.complete && img.naturalWidth > 0) {
             ctx.globalAlpha = masterOpacity;
             ctx.drawImage(img, 0, 0, W, H);
