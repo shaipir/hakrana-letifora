@@ -75,6 +75,8 @@ export default function MapCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
   const sizeRef = useRef({ width: 0, height: 0 });
   const brushPointsRef = useRef<Point[]>([]);
+  const refImageRef = useRef<HTMLImageElement | null>(null);
+  const refImageUrlRef = useRef<string | null>(null);
 
   const { project, drawing, addDrawingPoint, finishDrawing, setActiveSurface } =
     useMappingStore();
@@ -109,21 +111,19 @@ export default function MapCanvas() {
       ctx.stroke();
     }
 
-    // Reference photo
+    // Reference photo (cached)
     if (project.referencePhotoUrl) {
-      const img = new window.Image();
-      img.src = project.referencePhotoUrl;
-      // Draw synchronously if already loaded (cached)
-      if (img.complete && img.naturalWidth > 0) {
-        ctx.globalAlpha = 0.5;
-        ctx.drawImage(img, 0, 0, width, height);
+      if (refImageUrlRef.current !== project.referencePhotoUrl) {
+        refImageUrlRef.current = project.referencePhotoUrl;
+        const img = new window.Image();
+        img.src = project.referencePhotoUrl;
+        img.onload = () => { refImageRef.current = img; };
+        refImageRef.current = null;
+      }
+      if (refImageRef.current) {
+        ctx.globalAlpha = 0.6;
+        ctx.drawImage(refImageRef.current, 0, 0, width, height);
         ctx.globalAlpha = 1;
-      } else {
-        img.onload = () => {
-          ctx.globalAlpha = 0.5;
-          ctx.drawImage(img, 0, 0, width, height);
-          ctx.globalAlpha = 1;
-        };
       }
     }
 

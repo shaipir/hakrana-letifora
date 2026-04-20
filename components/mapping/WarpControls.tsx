@@ -23,7 +23,7 @@ const MODE_INSTRUCTIONS: Record<WarpMode, string> = {
 };
 
 export default function WarpControls() {
-  const { project, setActiveSurface, setWarpMode, setMeshDensity } = useMappingStore();
+  const { project, setActiveSurface, setWarpMode, setMeshDensity, assignContent } = useMappingStore();
   const { surfaces, activeSurfaceId } = project;
 
   const activeSurface = surfaces.find((s) => s.id === activeSurfaceId) ?? null;
@@ -86,6 +86,34 @@ export default function WarpControls() {
           <p className="mt-3 text-xs text-ar-text-muted leading-relaxed">
             {MODE_INSTRUCTIONS[activeSurface.warpMode]}
           </p>
+        </div>
+      )}
+
+      {/* Content assignment */}
+      {activeSurface && (
+        <div>
+          <p className="text-xs font-semibold text-ar-text-muted uppercase tracking-wider mb-2">
+            Content
+          </p>
+          {project.contentItems.length === 0 ? (
+            <p className="text-xs text-ar-text-dim">No content yet. Generate in Create tab first.</p>
+          ) : (
+            <div className="flex flex-col gap-1">
+              {project.contentItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => assignContent(activeSurface.id, item.id)}
+                  className={`px-3 py-2 rounded text-xs text-left transition-colors ${
+                    activeSurface.contentId === item.id
+                      ? 'bg-ar-accent/20 text-ar-accent border border-ar-accent/40'
+                      : 'bg-ar-surface text-ar-text-muted hover:bg-ar-border border border-transparent'
+                  }`}
+                >
+                  {item.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

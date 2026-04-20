@@ -1,0 +1,95 @@
+<h2>Where should the new mapping tools live in the UI?</h2>
+<p class="subtitle">Consider the existing workspace layout: left panel (settings) | center (canvas) | right (history)</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #0d0d12;">
+      <div style="display: flex; height: 200px; gap: 4px; font-family: monospace; font-size: 11px; color: #6b6b8a;">
+        <div style="width: 50px; background: #1c1c2e; border-radius: 6px; display: flex; flex-direction: column; align-items: center; padding: 8px 4px; gap: 12px;">
+          <div style="width: 28px; height: 28px; background: #00e5ff33; border: 1px solid #00e5ff; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px;">✋</div>
+          <div style="width: 28px; height: 28px; background: #1c1c2e; border: 1px solid #3a3a52; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px;">✏️</div>
+          <div style="width: 28px; height: 28px; background: #1c1c2e; border: 1px solid #3a3a52; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px;">⬡</div>
+          <div style="width: 28px; height: 28px; background: #1c1c2e; border: 1px solid #3a3a52; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🔲</div>
+          <div style="width: 28px; height: 28px; background: #1c1c2e; border: 1px solid #3a3a52; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px;">📷</div>
+        </div>
+        <div style="flex: 1; background: #10101a; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid #1c1c2e;">
+          <div style="color: #3a3a52; font-size: 13px;">Canvas + Surfaces</div>
+        </div>
+        <div style="width: 70px; background: #1c1c2e; border-radius: 6px; padding: 8px; font-size: 9px;">
+          <div style="color: #e8e8f0; margin-bottom: 8px;">Layers</div>
+          <div style="padding: 4px; background: #10101a; border-radius: 3px; margin-bottom: 4px;">Surface 1</div>
+          <div style="padding: 4px; background: #10101a; border-radius: 3px; margin-bottom: 4px;">Surface 2</div>
+          <div style="padding: 4px; background: #00e5ff22; border: 1px solid #00e5ff44; border-radius: 3px;">Surface 3</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A: Vertical Toolbar + Surface Panel</h3>
+      <p>Left toolbar for tools (draw, shape, warp, photo). Right panel becomes surface/layer manager. Familiar Photoshop/HeavyM layout.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #0d0d12;">
+      <div style="display: flex; flex-direction: column; height: 200px; gap: 4px; font-family: monospace; font-size: 11px; color: #6b6b8a;">
+        <div style="height: 36px; background: #1c1c2e; border-radius: 6px; display: flex; align-items: center; padding: 0 12px; gap: 8px;">
+          <span style="color: #e8e8f0; font-size: 10px;">Mode:</span>
+          <span style="padding: 3px 8px; background: #10101a; border-radius: 3px; font-size: 10px;">Create</span>
+          <span style="padding: 3px 8px; background: #00e5ff33; border: 1px solid #00e5ff; border-radius: 3px; font-size: 10px; color: #00e5ff;">Map</span>
+          <span style="padding: 3px 8px; background: #10101a; border-radius: 3px; font-size: 10px;">Warp</span>
+          <span style="padding: 3px 8px; background: #10101a; border-radius: 3px; font-size: 10px;">Live</span>
+        </div>
+        <div style="display: flex; flex: 1; gap: 4px;">
+          <div style="width: 160px; background: #1c1c2e; border-radius: 6px; padding: 8px; font-size: 9px;">
+            <div style="color: #e8e8f0; margin-bottom: 6px;">Map Tools</div>
+            <div style="padding: 4px; background: #10101a; border-radius: 3px; margin-bottom: 3px;">📷 Photo Detect</div>
+            <div style="padding: 4px; background: #10101a; border-radius: 3px; margin-bottom: 3px;">✏️ Freehand Draw</div>
+            <div style="padding: 4px; background: #10101a; border-radius: 3px; margin-bottom: 3px;">⬡ Shape Library</div>
+            <div style="padding: 4px; background: #10101a; border-radius: 3px;">🔲 Mesh Warp</div>
+          </div>
+          <div style="flex: 1; background: #10101a; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid #1c1c2e;">
+            <div style="color: #3a3a52; font-size: 13px;">Canvas</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B: Mode Tabs (Create → Map → Warp → Live)</h3>
+      <p>Top tab bar switches between workflow stages. Each mode has own left panel. Guided workflow, less overwhelming.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #0d0d12;">
+      <div style="display: flex; flex-direction: column; height: 200px; gap: 4px; font-family: monospace; font-size: 11px; color: #6b6b8a;">
+        <div style="display: flex; flex: 1; gap: 4px;">
+          <div style="width: 160px; background: #1c1c2e; border-radius: 6px; padding: 8px; font-size: 9px;">
+            <div style="color: #e8e8f0; margin-bottom: 6px;">ArtRevive</div>
+            <div style="padding: 4px; background: #8b5cf622; border: 1px solid #8b5cf644; border-radius: 3px; margin-bottom: 3px;">🎨 Restyle</div>
+            <div style="padding: 4px; background: #10101a; border-radius: 3px; margin-bottom: 3px;">✨ Glow</div>
+            <div style="padding: 4px; background: #10101a; border-radius: 3px; margin-bottom: 3px;">🏠 House</div>
+            <hr style="border-color: #1c1c2e; margin: 6px 0;">
+            <div style="color: #00e5ff; margin-bottom: 6px;">Mapping</div>
+            <div style="padding: 4px; background: #10101a; border-radius: 3px; margin-bottom: 3px;">📷 Surface Detect</div>
+            <div style="padding: 4px; background: #10101a; border-radius: 3px; margin-bottom: 3px;">✏️ Draw Zones</div>
+            <div style="padding: 4px; background: #10101a; border-radius: 3px; margin-bottom: 3px;">⬡ Shapes</div>
+            <div style="padding: 4px; background: #10101a; border-radius: 3px;">🔲 Warp</div>
+          </div>
+          <div style="flex: 1; background: #10101a; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid #1c1c2e;">
+            <div style="color: #3a3a52; font-size: 13px;">Canvas</div>
+          </div>
+          <div style="width: 80px; background: #1c1c2e; border-radius: 6px; padding: 8px; font-size: 9px;">
+            <div style="color: #e8e8f0; margin-bottom: 6px;">History</div>
+            <div style="width: 55px; height: 35px; background: #10101a; border-radius: 3px; margin-bottom: 4px;"></div>
+            <div style="width: 55px; height: 35px; background: #10101a; border-radius: 3px; margin-bottom: 4px;"></div>
+            <div style="width: 55px; height: 35px; background: #10101a; border-radius: 3px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C: Integrated Panel (Existing Layout)</h3>
+      <p>Add mapping tools as new section in existing left panel, below ArtRevive modes. Minimal UI change, everything in one place. Keeps current layout intact.</p>
+    </div>
+  </div>
+</div>

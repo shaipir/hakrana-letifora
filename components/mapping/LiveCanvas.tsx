@@ -74,16 +74,26 @@ export default function LiveCanvas() {
         ctx.fillStyle = '#000';
         ctx.fillRect(0, 0, W, H);
 
-        if (isLive) {
-          for (const surf of project.surfaces) {
-            if (!surf.visible || !surf.contentId) continue;
-            const content = project.contentItems.find((c) => c.id === surf.contentId);
-            if (!content) continue;
-            const img = getImage(content.id, content.url);
-            if (!img.complete || img.naturalWidth === 0) continue;
+        // Render surfaces (both preview and live)
+        for (const surf of project.surfaces) {
+          if (!surf.visible || !surf.contentId) continue;
+          const content = project.contentItems.find((c) => c.id === surf.contentId);
+          if (!content) continue;
+          const img = getImage(content.id, content.url);
+          if (!img.complete || img.naturalWidth === 0) continue;
 
-            const alpha = surf.opacity * masterOpacity;
-            ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+          const alpha = surf.opacity * masterOpacity;
+          ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+          ctx.drawImage(img, 0, 0, W, H);
+          ctx.globalAlpha = 1;
+        }
+
+        // If no surfaces with content, show latest content item as preview
+        if (project.surfaces.every((s) => !s.contentId) && project.contentItems.length > 0) {
+          const latest = project.contentItems[project.contentItems.length - 1];
+          const img = getImage(latest.id, latest.url);
+          if (img.complete && img.naturalWidth > 0) {
+            ctx.globalAlpha = masterOpacity;
             ctx.drawImage(img, 0, 0, W, H);
             ctx.globalAlpha = 1;
           }

@@ -414,17 +414,51 @@ export function syncContentFromArtRevive() {
   const { useArtReviveStore } = require('@/lib/artrevive-store');
   const artState = useArtReviveStore.getState();
   const mappingState = useMappingStore.getState();
+  const store = useMappingStore.getState();
 
+  // Sync uploaded source image as reference photo for Map tab
+  const uploadedAsset = artState.project.uploadedAsset;
+  if (uploadedAsset && !mappingState.project.referencePhotoUrl) {
+    store.setReferencePhoto(uploadedAsset.url);
+  }
+
+  // Sync generated assets as content items
   const existingIds = new Set(mappingState.project.contentItems.map((c) => c.id));
+  const newItems: ContentItem[] = [];
 
+  // Include source image as content option
+  if (uploadedAsset && !existingIds.has(uploadedAsset.id)) {
+    const item: ContentItem = {
+      id: uploadedAsset.id,
+      url: uploadedAsset.url,
+      name: `Source: ${uploadedAsset.originalName}`,
+      sourceMode: 'upload',
+    };
+    store.addContentItem(item);
+    newItems.push(item);
+  }
+
+  // Include generated results
   for (const asset of artState.project.generatedAssets) {
     if (!existingIds.has(asset.id)) {
-      useMappingStore.getState().addContentItem({
+      const item: ContentItem = {
         id: asset.id,
         url: asset.url,
         name: `${asset.mode} — ${new Date(asset.createdAt).toLocaleTimeString()}`,
         sourceMode: asset.mode,
-      });
+      };
+      store.addContentItem(item);
+      newItems.push(item);
+    }
+  }
+
+  // Auto-assign latest content to surfaces that have no content
+  const latestContent = store.project.contentItems.at(-1);
+  if (latestContent) {
+    for (const surface of store.project.surfaces) {
+      if (!surface.contentId) {
+        store.assignContent(surface.id, latestContent.id);
+      }
     }
   }
 }
