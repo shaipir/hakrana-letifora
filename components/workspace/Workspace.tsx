@@ -6,7 +6,11 @@ import ModeTabBar from '@/components/mapping/ModeTabBar';
 import DrawingToolbar from '@/components/mapping/DrawingToolbar';
 import ShapeLibrary from '@/components/mapping/ShapeLibrary';
 import SurfacePanel from '@/components/mapping/SurfacePanel';
+import PhotoUpload from '@/components/mapping/PhotoUpload';
+import DetectionOverlay from '@/components/mapping/DetectionOverlay';
 import MapCanvas from '@/components/mapping/MapCanvas';
+import WarpCanvas from '@/components/mapping/WarpCanvas';
+import WarpControls from '@/components/mapping/WarpControls';
 import TopBar from './TopBar';
 import RestylePanel from './RestylePanel';
 import GlowSculpturePanel from './GlowSculpturePanel';
@@ -43,6 +47,8 @@ export default function Workspace() {
         {activeTab === 'map' && (
           <>
             <div className="w-[240px] flex flex-col shrink-0 overflow-y-auto border-r border-ar-border bg-ar-panel">
+              <PhotoUpload />
+              <DetectionOverlay />
               <DrawingToolbar />
               <ShapeLibrary />
               <SurfacePanel />
@@ -51,9 +57,13 @@ export default function Workspace() {
           </>
         )}
         {activeTab === 'warp' && (
-          <div className="flex flex-1 items-center justify-center text-ar-text-muted text-sm">
-            Warp tab — coming next
-          </div>
+          <>
+            <div className="w-[240px] flex flex-col shrink-0 overflow-y-auto border-r border-ar-border bg-ar-panel">
+              <WarpControls />
+              <SurfacePanel />
+            </div>
+            <WarpCanvas />
+          </>
         )}
         {activeTab === 'live' && (
           <div className="flex flex-1 items-center justify-center text-ar-text-muted text-sm">
