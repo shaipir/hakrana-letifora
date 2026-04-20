@@ -1,6 +1,7 @@
 'use client';
 
-import { useMappingStore } from '@/lib/mapping-store';
+import { useEffect } from 'react';
+import { useMappingStore, syncContentFromArtRevive } from '@/lib/mapping-store';
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import ModeTabBar from '@/components/mapping/ModeTabBar';
 import DrawingToolbar from '@/components/mapping/DrawingToolbar';
@@ -11,6 +12,8 @@ import DetectionOverlay from '@/components/mapping/DetectionOverlay';
 import MapCanvas from '@/components/mapping/MapCanvas';
 import WarpCanvas from '@/components/mapping/WarpCanvas';
 import WarpControls from '@/components/mapping/WarpControls';
+import LiveCanvas from '@/components/mapping/LiveCanvas';
+import LiveControls from '@/components/mapping/LiveControls';
 import TopBar from './TopBar';
 import RestylePanel from './RestylePanel';
 import GlowSculpturePanel from './GlowSculpturePanel';
@@ -22,6 +25,12 @@ import HistoryPanel from './HistoryPanel';
 export default function Workspace() {
   const { activeTab } = useMappingStore();
   const { activeMode } = useArtReviveStore();
+
+  useEffect(() => {
+    if (activeTab !== 'create') {
+      syncContentFromArtRevive();
+    }
+  }, [activeTab]);
 
   return (
     <div className="flex flex-col h-screen bg-ar-bg text-ar-text overflow-hidden">
@@ -66,9 +75,12 @@ export default function Workspace() {
           </>
         )}
         {activeTab === 'live' && (
-          <div className="flex flex-1 items-center justify-center text-ar-text-muted text-sm">
-            Live tab — coming next
-          </div>
+          <>
+            <div className="w-[260px] flex flex-col shrink-0 overflow-y-auto border-r border-ar-border bg-ar-panel">
+              <LiveControls />
+            </div>
+            <LiveCanvas />
+          </>
         )}
       </div>
     </div>

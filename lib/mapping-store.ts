@@ -407,3 +407,24 @@ export const useMappingStore = create<MappingState>((set, get) => ({
   setCrossfadeDuration: (crossfadeDuration) =>
     set((s) => ({ live: { ...s.live, crossfadeDuration } })),
 }));
+
+// ─── Cross-store Sync ─────────────────────────────────────────────────────────
+
+export function syncContentFromArtRevive() {
+  const { useArtReviveStore } = require('@/lib/artrevive-store');
+  const artState = useArtReviveStore.getState();
+  const mappingState = useMappingStore.getState();
+
+  const existingIds = new Set(mappingState.project.contentItems.map((c) => c.id));
+
+  for (const asset of artState.project.generatedAssets) {
+    if (!existingIds.has(asset.id)) {
+      useMappingStore.getState().addContentItem({
+        id: asset.id,
+        url: asset.url,
+        name: `${asset.mode} — ${new Date(asset.createdAt).toLocaleTimeString()}`,
+        sourceMode: asset.mode,
+      });
+    }
+  }
+}
