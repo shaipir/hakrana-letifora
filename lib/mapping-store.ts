@@ -411,6 +411,8 @@ export const useMappingStore = create<MappingState>((set, get) => ({
 // ─── Cross-store Sync ─────────────────────────────────────────────────────────
 
 export function syncContentFromArtRevive() {
+  console.log('[MAPPING:Store] syncContentFromArtRevive called');
+
   const { useArtReviveStore } = require('@/lib/artrevive-store');
   const artState = useArtReviveStore.getState();
   const mappingState = useMappingStore.getState();
@@ -418,13 +420,21 @@ export function syncContentFromArtRevive() {
 
   // Sync uploaded source image as reference photo for Map tab
   const uploadedAsset = artState.project.uploadedAsset;
-  if (uploadedAsset && !mappingState.project.referencePhotoUrl) {
-    store.setReferencePhoto(uploadedAsset.url);
+  if (uploadedAsset) {
+    console.log('[MAPPING:Store] Uploaded asset found:', uploadedAsset.id, uploadedAsset.originalName);
+    if (!mappingState.project.referencePhotoUrl) {
+      console.log('[MAPPING:Store] Setting reference photo from uploaded asset:', uploadedAsset.url.slice(0, 80));
+      store.setReferencePhoto(uploadedAsset.url);
+    }
+  } else {
+    console.log('[MAPPING:Store] No uploaded asset in artrevive project');
   }
 
   // Sync generated assets as content items
   const existingIds = new Set(mappingState.project.contentItems.map((c) => c.id));
   const newItems: ContentItem[] = [];
+
+  console.log('[MAPPING:Store] Generated assets to sync:', artState.project.generatedAssets.length, '| Already in mapping:', mappingState.project.contentItems.length);
 
   // Include source image as content option
   if (uploadedAsset && !existingIds.has(uploadedAsset.id)) {
@@ -434,6 +444,7 @@ export function syncContentFromArtRevive() {
       name: `Source: ${uploadedAsset.originalName}`,
       sourceMode: 'upload',
     };
+    console.log('[MAPPING:Store] Adding uploaded asset as content item:', item.id, item.name);
     store.addContentItem(item);
     newItems.push(item);
   }
@@ -447,18 +458,24 @@ export function syncContentFromArtRevive() {
         name: `${asset.mode} — ${new Date(asset.createdAt).toLocaleTimeString()}`,
         sourceMode: asset.mode,
       };
+      console.log('[MAPPING:Store] Adding generated asset as content item:', item.id, item.name);
       store.addContentItem(item);
       newItems.push(item);
     }
   }
+
+  console.log('[MAPPING:Store] Sync complete — new items added:', newItems.length);
 
   // Auto-assign latest content to surfaces that have no content
   const latestContent = store.project.contentItems.at(-1);
   if (latestContent) {
     for (const surface of store.project.surfaces) {
       if (!surface.contentId) {
+        console.log('[MAPPING:Store] Auto-assigning content', latestContent.id, '(', latestContent.name, ') to surface:', surface.id, surface.name);
         store.assignContent(surface.id, latestContent.id);
       }
     }
+  } else {
+    console.warn('[MAPPING:Store] No content items available for auto-assignment to surfaces');
   }
 }

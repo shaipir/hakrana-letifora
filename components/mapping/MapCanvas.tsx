@@ -84,106 +84,124 @@ export default function MapCanvas() {
   // ── Draw ──────────────────────────────────────────────────────────────────
 
   const draw = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const { width, height } = sizeRef.current;
-
-    // Background
-    ctx.fillStyle = AR_BG;
-    ctx.fillRect(0, 0, width, height);
-
-    // Grid
-    if (drawing.snapMode === 'grid') {
-      ctx.strokeStyle = GRID_COLOR;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (let x = 0; x <= width; x += drawing.gridSize) {
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
+    try {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.error('[MAPPING:MapCanvas] Failed to get 2D canvas context');
+        return;
       }
-      for (let y = 0; y <= height; y += drawing.gridSize) {
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-      }
-      ctx.stroke();
-    }
 
-    // Reference photo (cached)
-    if (project.referencePhotoUrl) {
-      if (refImageUrlRef.current !== project.referencePhotoUrl) {
-        refImageUrlRef.current = project.referencePhotoUrl;
-        const img = new window.Image();
-        img.src = project.referencePhotoUrl;
-        img.onload = () => { refImageRef.current = img; };
-        refImageRef.current = null;
-      }
-      if (refImageRef.current) {
-        ctx.globalAlpha = 0.6;
-        ctx.drawImage(refImageRef.current, 0, 0, width, height);
-        ctx.globalAlpha = 1;
-      }
-    }
+      const { width, height } = sizeRef.current;
 
-    // Existing surfaces
-    for (const surface of project.surfaces) {
-      if (!surface.visible) continue;
-      const pts = surface.outline.points;
-      if (pts.length < 3) continue;
+      // Background
+      ctx.fillStyle = AR_BG;
+      ctx.fillRect(0, 0, width, height);
 
-      const isActive = surface.id === project.activeSurfaceId;
-      const strokeColor = isActive ? CYAN_ACTIVE : BLUE_INACTIVE;
-
-      // Filled polygon
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x, pts[0].y);
-      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-      ctx.closePath();
-      ctx.fillStyle = isActive ? 'rgba(0,229,255,0.08)' : 'rgba(59,130,246,0.08)';
-      ctx.fill();
-
-      // Stroke outline
-      ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = isActive ? 2 : 1.5;
-      ctx.setLineDash([]);
-      ctx.stroke();
-
-      // Vertex points
-      for (const p of pts) {
+      // Grid
+      if (drawing.snapMode === 'grid') {
+        ctx.strokeStyle = GRID_COLOR;
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        for (let x = 0; x <= width; x += drawing.gridSize) {
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, height);
+        }
+        for (let y = 0; y <= height; y += drawing.gridSize) {
+          ctx.moveTo(0, y);
+          ctx.lineTo(width, y);
+        }
+        ctx.stroke();
+      }
+
+      // Reference photo (cached)
+      if (project.referencePhotoUrl) {
+        if (refImageUrlRef.current !== project.referencePhotoUrl) {
+          console.log('[MAPPING:MapCanvas] Loading reference photo:', project.referencePhotoUrl.slice(0, 80));
+          refImageUrlRef.current = project.referencePhotoUrl;
+          const img = new window.Image();
+          img.src = project.referencePhotoUrl;
+          img.onload = () => {
+            console.log('[MAPPING:MapCanvas] Reference photo loaded OK', img.naturalWidth, 'x', img.naturalHeight);
+            refImageRef.current = img;
+          };
+          img.onerror = (err) => {
+            console.error('[MAPPING:MapCanvas] Reference photo failed to load', err);
+            refImageRef.current = null;
+          };
+          refImageRef.current = null;
+        }
+        if (!refImageRef.current) {
+          console.warn('[MAPPING:MapCanvas] Reference photo URL set but image not yet loaded/available');
+        }
+        if (refImageRef.current) {
+          ctx.globalAlpha = 0.6;
+          ctx.drawImage(refImageRef.current, 0, 0, width, height);
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      // Existing surfaces
+      for (const surface of project.surfaces) {
+        if (!surface.visible) continue;
+        const pts = surface.outline.points;
+        if (pts.length < 3) continue;
+
+        const isActive = surface.id === project.activeSurfaceId;
+        const strokeColor = isActive ? CYAN_ACTIVE : BLUE_INACTIVE;
+
+        // Filled polygon
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+        ctx.closePath();
+        ctx.fillStyle = isActive ? 'rgba(0,229,255,0.08)' : 'rgba(59,130,246,0.08)';
+        ctx.fill();
+
+        // Stroke outline
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = isActive ? 2 : 1.5;
+        ctx.setLineDash([]);
+        ctx.stroke();
+
+        // Vertex points
+        for (const p of pts) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = strokeColor;
+          ctx.fill();
+        }
+
+        // Name label near first point
+        ctx.font = '12px Inter, sans-serif';
         ctx.fillStyle = strokeColor;
-        ctx.fill();
+        ctx.fillText(surface.name, pts[0].x + 6, pts[0].y - 6);
       }
 
-      // Name label near first point
-      ctx.font = '12px Inter, sans-serif';
-      ctx.fillStyle = strokeColor;
-      ctx.fillText(surface.name, pts[0].x + 6, pts[0].y - 6);
-    }
-
-    // Current drawing (in-progress polyline)
-    const cPts = drawing.currentPoints;
-    if (cPts.length > 0) {
-      // Polyline
-      ctx.beginPath();
-      ctx.moveTo(cPts[0].x, cPts[0].y);
-      for (let i = 1; i < cPts.length; i++) ctx.lineTo(cPts[i].x, cPts[i].y);
-      ctx.strokeStyle = NEON_GREEN;
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 4]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Point circles
-      for (const p of cPts) {
+      // Current drawing (in-progress polyline)
+      const cPts = drawing.currentPoints;
+      if (cPts.length > 0) {
+        // Polyline
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = NEON_GREEN;
-        ctx.fill();
+        ctx.moveTo(cPts[0].x, cPts[0].y);
+        for (let i = 1; i < cPts.length; i++) ctx.lineTo(cPts[i].x, cPts[i].y);
+        ctx.strokeStyle = NEON_GREEN;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Point circles
+        for (const p of cPts) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = NEON_GREEN;
+          ctx.fill();
+        }
       }
+    } catch (err) {
+      console.error('[MAPPING:MapCanvas] Draw function threw an error:', err);
     }
   }, [project, drawing]);
 

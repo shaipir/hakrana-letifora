@@ -41,7 +41,14 @@ export default function LiveCanvas() {
   const getImage = useCallback((id: string, url: string): HTMLImageElement => {
     const cache = imageCache.current;
     if (cache.has(id)) return cache.get(id)!;
+    console.log('[MAPPING:LiveCanvas] Loading content image id:', id, 'url:', url.slice(0, 80));
     const img = new Image();
+    img.onload = () => {
+      console.log('[MAPPING:LiveCanvas] Content image loaded OK id:', id, img.naturalWidth, 'x', img.naturalHeight);
+    };
+    img.onerror = (err) => {
+      console.error('[MAPPING:LiveCanvas] Content image failed to load id:', id, 'url:', url.slice(0, 80), err);
+    };
     img.src = url;
     cache.set(id, img);
     return img;
@@ -56,7 +63,10 @@ export default function LiveCanvas() {
       const { live, project } = store.getState();
       const { isLive, blackout, frozen, masterOpacity } = live;
       const ctx = canvas!.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) {
+        console.error('[MAPPING:LiveCanvas] Failed to get 2D canvas context');
+        return;
+      }
 
       const W = canvas!.width;
       const H = canvas!.height;
@@ -75,10 +85,20 @@ export default function LiveCanvas() {
         ctx.fillRect(0, 0, W, H);
 
         // Render surfaces (both preview and live)
+        if (project.contentItems.length === 0) {
+          console.warn('[MAPPING:LiveCanvas] No content items available in project');
+        }
         for (const surf of project.surfaces) {
-          if (!surf.visible || !surf.contentId) continue;
+          if (!surf.visible) continue;
+          if (!surf.contentId) {
+            console.warn('[MAPPING:LiveCanvas] Surface has no contentId:', surf.id, surf.name);
+            continue;
+          }
           const content = project.contentItems.find((c) => c.id === surf.contentId);
-          if (!content) continue;
+          if (!content) {
+            console.warn('[MAPPING:LiveCanvas] contentId not found in contentItems for surface:', surf.id, surf.name, 'contentId:', surf.contentId);
+            continue;
+          }
           const img = getImage(content.id, content.url);
           if (!img.complete || img.naturalWidth === 0) continue;
 
@@ -104,7 +124,13 @@ export default function LiveCanvas() {
 
       // Mirror to projector window
       const projCanvas = getProjectorCanvas();
-      if (projCanvas) {
+      if (!projCanvas) {
+        // Only warn once per render — check isLive to avoid spam when projector not open
+        const { live: liveState } = store.getState();
+        if (liveState.isLive) {
+          console.warn('[MAPPING:LiveCanvas] Projector canvas not available despite isLive=true');
+        }
+      } else {
         const pCtx = projCanvas.getContext('2d');
         if (pCtx && canvas!.width > 0 && canvas!.height > 0) {
           pCtx.drawImage(canvas!, 0, 0, projCanvas.width, projCanvas.height);

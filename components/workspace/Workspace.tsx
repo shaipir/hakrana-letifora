@@ -27,7 +27,9 @@ export default function Workspace() {
   const { activeMode } = useArtReviveStore();
 
   useEffect(() => {
+    console.log('[MAPPING:Workspace] Tab switched to:', activeTab);
     if (activeTab !== 'create') {
+      console.log('[MAPPING:Workspace] Calling syncContentFromArtRevive for tab:', activeTab);
       syncContentFromArtRevive();
     }
   }, [activeTab]);

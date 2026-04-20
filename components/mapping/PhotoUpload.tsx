@@ -20,12 +20,18 @@ export default function PhotoUpload() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    console.log('[MAPPING:PhotoUpload] File selected:', file.name, 'size:', file.size, 'type:', file.type);
+
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result as string;
+      console.log('[MAPPING:PhotoUpload] File read OK — dataUrl length:', dataUrl?.length, 'prefix:', dataUrl?.slice(0, 40));
       setReferencePhoto(dataUrl);
       setDetectedCount(null);
       setError(null);
+    };
+    reader.onerror = (ev) => {
+      console.error('[MAPPING:PhotoUpload] FileReader error for file:', file.name, ev);
     };
     reader.readAsDataURL(file);
     // Reset input so same file can be re-selected
@@ -52,15 +58,22 @@ export default function PhotoUpload() {
           ? (localStorage.getItem('artrevive_gemini_key') ?? undefined)
           : undefined;
 
+      console.log('[MAPPING:PhotoUpload] Calling detectSurfaces API — mimeType:', mimeType, 'base64 length:', imageBase64.length, 'apiKey present:', !!apiKey);
+
       const result = await detectSurfaces(imageBase64, mimeType, apiKey ?? undefined);
+
+      console.log('[MAPPING:PhotoUpload] Detection API response — zones detected:', result.zones.length, result.zones);
+
       setDetectedZones(result.zones);
       setDetectedCount(result.zones.length);
 
       if (result.zones.length === 0) {
+        console.warn('[MAPPING:PhotoUpload] Detection returned 0 zones');
         setError('No surfaces detected. Try a clearer photo with visible flat surfaces.');
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Detection failed';
+      console.error('[MAPPING:PhotoUpload] Detection API error:', err);
       setError(message);
     } finally {
       setDetecting(false);

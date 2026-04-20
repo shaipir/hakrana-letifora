@@ -37,6 +37,11 @@ function createShader(gl: WebGLRenderingContext, type: number, src: string): Web
   const shader = gl.createShader(type)!;
   gl.shaderSource(shader, src);
   gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    const info = gl.getShaderInfoLog(shader);
+    const typeName = type === gl.VERTEX_SHADER ? 'VERTEX' : 'FRAGMENT';
+    console.error(`[MAPPING:WarpCanvas] ${typeName} shader compilation failed:`, info);
+  }
   return shader;
 }
 
@@ -45,6 +50,12 @@ function createProgram(gl: WebGLRenderingContext): WebGLProgram {
   gl.attachShader(prog, createShader(gl, gl.VERTEX_SHADER, VS));
   gl.attachShader(prog, createShader(gl, gl.FRAGMENT_SHADER, FS));
   gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    const info = gl.getProgramInfoLog(prog);
+    console.error('[MAPPING:WarpCanvas] WebGL program link failed:', info);
+  } else {
+    console.log('[MAPPING:WarpCanvas] WebGL program linked successfully');
+  }
   return prog;
 }
 
@@ -56,9 +67,11 @@ function loadTexture(gl: WebGLRenderingContext, url: string, cache: TexCache): W
   if (cache.has(url)) return cache.get(url) ?? null;
   // Mark as loading to avoid duplicate requests
   cache.set(url, null);
+  console.log('[MAPPING:WarpCanvas] Starting texture load for:', url.slice(0, 80));
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.onload = () => {
+    console.log('[MAPPING:WarpCanvas] Texture image loaded OK', img.naturalWidth, 'x', img.naturalHeight, 'url:', url.slice(0, 80));
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
@@ -66,7 +79,14 @@ function loadTexture(gl: WebGLRenderingContext, url: string, cache: TexCache): W
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    if (tex) cache.set(url, tex);
+    if (tex) {
+      cache.set(url, tex);
+    } else {
+      console.error('[MAPPING:WarpCanvas] gl.createTexture() returned null for url:', url.slice(0, 80));
+    }
+  };
+  img.onerror = (err) => {
+    console.error('[MAPPING:WarpCanvas] Texture image failed to load, url:', url.slice(0, 80), err);
   };
   img.src = url;
   return null;
@@ -319,7 +339,11 @@ export default function WarpCanvas() {
     const canvas = glCanvasRef.current;
     if (!canvas) return;
     const gl = canvas.getContext('webgl');
-    if (!gl) return;
+    if (!gl) {
+      console.error('[MAPPING:WarpCanvas] WebGL context creation failed — browser may not support WebGL or hardware acceleration is disabled');
+      return;
+    }
+    console.log('[MAPPING:WarpCanvas] WebGL context created successfully');
     glRef.current = gl;
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -361,14 +385,28 @@ export default function WarpCanvas() {
       gl.clear(gl.COLOR_BUFFER_BIT);
 
       for (const surface of surfaces) {
-        if (!surface.visible || !surface.contentId) continue;
+        if (!surface.visible) continue;
+        if (!surface.contentId) {
+          console.warn('[MAPPING:WarpCanvas] Surface has no contentId, skipping draw:', surface.id, surface.name);
+          continue;
+        }
         const item = contentItems.find((ci) => ci.id === surface.contentId);
-        if (!item) continue;
+        if (!item) {
+          console.warn('[MAPPING:WarpCanvas] contentId not found in contentItems for surface:', surface.id, surface.name, 'contentId:', surface.contentId);
+          continue;
+        }
 
         const texture = loadTexture(gl, item.url, texCacheRef.current);
-        if (!texture) continue;
+        if (!texture) {
+          // Texture still loading — this is normal, not an error
+          continue;
+        }
 
-        drawSurface(gl, prog, surface, texture, canvasWidth, canvasHeight);
+        try {
+          drawSurface(gl, prog, surface, texture, canvasWidth, canvasHeight);
+        } catch (err) {
+          console.error('[MAPPING:WarpCanvas] drawSurface threw an error for surface:', surface.id, surface.name, err);
+        }
       }
 
       // Overlay for active surface

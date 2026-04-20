@@ -70,32 +70,49 @@ export function ShapeLibrary() {
   const surfaces = useMappingStore((s) => s.project.surfaces);
   const isAtLimit = surfaces.length >= MAX_SURFACES;
 
+  if (isAtLimit) {
+    console.log('[MAPPING:ShapeLibrary] Max surfaces reached:', surfaces.length, '/', MAX_SURFACES);
+  }
+
   const shapes = getShapesByCategory(activeCategory);
 
   function handleShapeClick(shape: ShapeDefinition) {
-    if (isAtLimit) return;
+    if (isAtLimit) {
+      console.warn('[MAPPING:ShapeLibrary] Max surfaces reached (', MAX_SURFACES, ') — cannot add shape:', shape.name);
+      return;
+    }
 
-    const store = useMappingStore.getState();
-    // Capture length before adding so we can identify the new surface
-    const prevCount = store.project.surfaces.length;
+    console.log('[MAPPING:ShapeLibrary] Shape selected:', shape.id, shape.name, 'category:', shape.category);
 
-    store.addSurface();
+    try {
+      const store = useMappingStore.getState();
+      // Capture length before adding so we can identify the new surface
+      const prevCount = store.project.surfaces.length;
 
-    // After addSurface the new surface is the last one
-    const updatedSurfaces = useMappingStore.getState().project.surfaces;
-    if (updatedSurfaces.length <= prevCount) return; // guard: limit hit inside store
+      store.addSurface();
 
-    const newSurface = updatedSurfaces[updatedSurfaces.length - 1];
+      // After addSurface the new surface is the last one
+      const updatedSurfaces = useMappingStore.getState().project.surfaces;
+      if (updatedSurfaces.length <= prevCount) {
+        console.error('[MAPPING:ShapeLibrary] addSurface did not add a new surface — limit may have been hit inside store');
+        return; // guard: limit hit inside store
+      }
 
-    const points = svgPathToPoints(shape.path, 4);
-    store.updateSurface(newSurface.id, {
-      name: shape.name,
-      outline: {
-        type: 'shape',
-        path: shape.path,
-        points,
-      },
-    });
+      const newSurface = updatedSurfaces[updatedSurfaces.length - 1];
+      console.log('[MAPPING:ShapeLibrary] New surface created:', newSurface.id, '— applying shape outline');
+
+      const points = svgPathToPoints(shape.path, 4);
+      store.updateSurface(newSurface.id, {
+        name: shape.name,
+        outline: {
+          type: 'shape',
+          path: shape.path,
+          points,
+        },
+      });
+    } catch (err) {
+      console.error('[MAPPING:ShapeLibrary] Error during shape selection:', shape.id, shape.name, err);
+    }
   }
 
   return (
