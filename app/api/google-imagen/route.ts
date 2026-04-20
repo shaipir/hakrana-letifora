@@ -14,7 +14,7 @@ function pickImageFromParts(parts: InlineImagePart[]) {
   for (const p of parts) {
     const id = p.inlineData ?? p.inline_data;
     if (!id?.data) continue;
-    const mime = id.mimeType ?? id.mime_type ?? 'image/png';
+    const mime = (id as any).mimeType ?? (id as any).mime_type ?? 'image/png';
     if (mime.startsWith('image/')) {
       return { data: id.data, mime };
     }
