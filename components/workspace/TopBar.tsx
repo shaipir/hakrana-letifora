@@ -5,6 +5,10 @@ import { Upload, Zap, Download, RotateCcw, Layers, Settings, X, Eye, EyeOff } fr
 import { useArtReviveStore } from '@/lib/artrevive-store';
 import { UploadedAsset, GeneratedAsset, GeneratedLoop } from '@/lib/types';
 import { extractBuildingBounds, alignFrame, alignFrames } from '@/lib/alignment/edge-register';
+import { generateImageWithGemini } from '@/lib/gemini-client';
+import { buildWorldTransformPrompt } from '@/lib/restyle/prompt-builder';
+import { buildGlowSculpturePrompt } from '@/lib/glow-sculpture/prompt-builder';
+import { buildHouseProjectionPrompt } from '@/lib/house-projection/prompt-builder';
 
 const GEMINI_KEY_STORAGE = 'artrevive_gemini_key';
 
@@ -123,7 +127,7 @@ export default function TopBar() {
       setGenerateError(null);
       setGeneratedLoop(null);
       try {
-        const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 768);
+        const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1024);
         const settings = activeMode === 'restyle'
           ? project.restyleSettings
           : activeMode === 'glow-sculpture'
@@ -173,53 +177,36 @@ export default function TopBar() {
     setGenerating(true);
     setGenerateError(null);
     try {
-      const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 768);
+      if (!storedKey) throw new Error('No API key. Add your Gemini key in Settings.');
+      const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1024);
 
-      async function safePost(url: string, body: object) {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        const text = await res.text();
-        let json: any;
-        try { json = JSON.parse(text); }
-        catch { throw new Error(`Server error (${res.status}): ${text.slice(0, 200)}`); }
-        if (!res.ok) throw new Error(json?.error ?? `Request failed (${res.status})`);
-        return json;
-      }
-
+      // Build prompt based on mode
+      let prompt: string;
       if (activeMode === 'restyle') {
-        const json = await safePost('/api/world-transform', {
-          imageBase64, mimeType, settings: project.restyleSettings, apiKey: storedKey || undefined,
-        });
-        let resultUrl = json.url;
-        if (!resultUrl) throw new Error(json.error ?? 'No image returned');
-        if (originalBounds) resultUrl = await alignFrame(resultUrl, originalBounds);
-        addGeneratedAsset({ id: crypto.randomUUID(), url: resultUrl, mode: 'restyle',
-          settings: project.restyleSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
-
+        const { transformPrompt } = buildWorldTransformPrompt(project.restyleSettings);
+        prompt = transformPrompt;
       } else if (activeMode === 'glow-sculpture') {
-        const json = await safePost('/api/glow-sculpture', {
-          imageBase64, mimeType, settings: project.glowSculptureSettings, apiKey: storedKey || undefined,
-        });
-        let resultUrl = json.url;
-        if (!resultUrl) throw new Error(json.error ?? 'No image returned');
-        if (originalBounds) resultUrl = await alignFrame(resultUrl, originalBounds);
-        addGeneratedAsset({ id: crypto.randomUUID(), url: resultUrl, mode: 'glow-sculpture',
-          settings: project.glowSculptureSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
-
-      } else if (activeMode === 'house-projection') {
-        const json = await safePost('/api/house-projection', {
-          imageBase64, mimeType, settings: project.houseProjectionSettings, apiKey: storedKey || undefined,
-        });
-        let resultUrl = json.url;
-        if (!resultUrl) throw new Error(json.error ?? 'No image returned');
-        if (originalBounds) resultUrl = await alignFrame(resultUrl, originalBounds);
-        addGeneratedAsset({ id: crypto.randomUUID(), url: resultUrl, mode: 'house-projection',
-          settings: project.houseProjectionSettings, sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString() });
+        const { transformPrompt } = buildGlowSculpturePrompt(project.glowSculptureSettings);
+        prompt = transformPrompt;
+      } else {
+        const { transformPrompt } = buildHouseProjectionPrompt(project.houseProjectionSettings);
+        prompt = transformPrompt;
       }
+
+      // Call Gemini directly from browser — no Vercel timeout
+      const result = await generateImageWithGemini(storedKey, imageBase64, mimeType, prompt);
+      let resultUrl = result.url;
+      if (originalBounds) resultUrl = await alignFrame(resultUrl, originalBounds);
+
+      addGeneratedAsset({
+        id: crypto.randomUUID(), url: resultUrl, mode: activeMode,
+        settings: activeMode === 'restyle' ? project.restyleSettings
+          : activeMode === 'glow-sculpture' ? project.glowSculptureSettings
+          : project.houseProjectionSettings,
+        sourceAssetId: project.uploadedAsset.id, createdAt: new Date().toISOString(),
+      });
     } catch (err: any) {
+      console.error('[Generate] Error:', err);
       setGenerateError(err?.message ?? 'Generation failed');
     } finally {
       setGenerating(false);
