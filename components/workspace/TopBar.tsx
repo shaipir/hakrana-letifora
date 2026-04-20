@@ -73,6 +73,12 @@ export default function TopBar() {
     finally { setUploading(false); }
   }
 
+  function extractBase64FromDataUrl(dataUrl: string): { base64: string; mimeType: string } {
+    const match = dataUrl.match(/^data:(image\/[^;]+);base64,(.+)$/);
+    if (!match) throw new Error('Invalid data URL');
+    return { mimeType: match[1], base64: match[2] };
+  }
+
   function resizeImageForApi(dataUrl: string, maxPx: number): Promise<{ base64: string; mimeType: string }> {
     return new Promise((resolve, reject) => {
       const img = new window.Image();
@@ -127,7 +133,7 @@ export default function TopBar() {
       setGenerateError(null);
       setGeneratedLoop(null);
       try {
-        const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1024);
+        const { base64: imageBase64, mimeType } = extractBase64FromDataUrl(project.uploadedAsset.url);
         const settings = activeMode === 'restyle'
           ? project.restyleSettings
           : activeMode === 'glow-sculpture'
@@ -178,7 +184,7 @@ export default function TopBar() {
     setGenerateError(null);
     try {
       if (!storedKey) throw new Error('No API key. Add your Gemini key in Settings.');
-      const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1024);
+      const { base64: imageBase64, mimeType } = extractBase64FromDataUrl(project.uploadedAsset.url);
 
       // Build prompt based on mode
       let prompt: string;
