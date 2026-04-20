@@ -2,5 +2,12 @@
   "framework": "nextjs",
   "buildCommand": "next build",
   "outputDirectory": ".next",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "functions": {
+    "app/api/world-transform/route.ts": { "maxDuration": 120 },
+    "app/api/house-projection/route.ts": { "maxDuration": 120 },
+    "app/api/glow-sculpture/route.ts": { "maxDuration": 120 },
+    "app/api/generate-loop/route.ts": { "maxDuration": 120 },
+    "app/api/restyle/route.ts": { "maxDuration": 120 }
+  }
 }

@@ -3,7 +3,7 @@ import { HouseProjectionSettings } from '@/lib/types';
 import { buildHouseProjectionPrompt } from '@/lib/house-projection/prompt-builder';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';
 

@@ -123,7 +123,7 @@ export default function TopBar() {
       setGenerateError(null);
       setGeneratedLoop(null);
       try {
-        const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1024);
+        const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1536);
         const settings = activeMode === 'restyle'
           ? project.restyleSettings
           : activeMode === 'glow-sculpture'
@@ -173,7 +173,7 @@ export default function TopBar() {
     setGenerating(true);
     setGenerateError(null);
     try {
-      const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1024);
+      const { base64: imageBase64, mimeType } = await resizeImageForApi(project.uploadedAsset.url, 1536);
 
       async function safePost(url: string, body: object) {
         const res = await fetch(url, {

@@ -3,7 +3,7 @@ import { RestyleSettings } from '@/lib/types';
 import { buildWorldTransformPrompt } from '@/lib/restyle/prompt-builder';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 // Gemini model that supports image generation output
 const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getRestyleProvider } from '@/lib/restyle/provider';
 import { GeneratedAsset, RestyleSettings } from '@/lib/types';
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   try {

@@ -9,7 +9,7 @@ import { buildHouseProjectionPrompt } from '@/lib/house-projection/prompt-builde
 import { buildFrameMotionPrompt } from '@/lib/loop/frame-prompt-builder';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';
 const BATCH_SIZE = 5;
